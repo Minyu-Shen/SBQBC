@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 def sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent, c_H=1.0):
 
     ######## hyper-parameters ########
-    duration = 3600 * 0.1
+    duration = 3600 * 0.05
 
     ######## simulation ########
     bus_flows = {0: [f, c_H]} # [x:buses/hr, y: c.v.]
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     queue_rule = 'FO-Bus'
     f = 100.0 # buses/hr
     mu_S = 25 # seconds
-    c_S = 0
+    c_S = 0.1
     c_H = 0.4 # arrival headway variation
     persistent = True
 

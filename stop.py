@@ -90,6 +90,8 @@ class Stop(object):
             assert bus.lane_target == 0, 'the lane target must be the most-upstream place'
             if bus.react_left_step > 0:
                 bus.react_left_step -= 1
+                # print(bus.bus_id)
+                # print(current_time)
             else:
                 if 0 <= bus.move_up_step < bus.MOVE_UP_STEPS:
                     self._place_pre_occupies[0] = bus
@@ -127,13 +129,14 @@ class Stop(object):
         if bus is None: return
         # print(bus.bus_id, loc, bus.lane_target, bus.wish_berth)
         if loc == (self._berth_num-1):
-            # in future add reaction time is there is buffer
-            if 0 <= bus.move_up_step < bus.MOVE_UP_STEPS:
-                bus.move_up_step += 1
-            if bus.move_up_step == bus.MOVE_UP_STEPS:
-                # for now, just leave, in future, add signal
-                assert self._downstream_signal == None
-                self._lane_discharge_to_buffer()
+            # in future add reaction time if there is buffer
+            # if 0 <= bus.move_up_step < bus.MOVE_UP_STEPS:
+            #     bus.move_up_step += 1
+            # if bus.move_up_step == bus.MOVE_UP_STEPS:
+
+            # for now, just leave, in future, add signal
+            assert self._downstream_signal == None
+            self._lane_discharge_to_buffer()
         else:
             # not the most-downstream space ...
             if bus.wish_berth is not None: # overtake-in case
@@ -155,7 +158,7 @@ class Stop(object):
                             self._buses_in_berth[bus.berth_target] = bus
                             self.reset_bus_state(bus)
                             bus.wish_berth = None
-                            self._buses_serving[loc+1] = bus
+                            # self._buses_serving[loc+1] = bus
                 else: # cannot enter the berth
                     if bus.lane_target == loc+1: # move the next place
                         if bus.react_left_step > 0:
@@ -194,12 +197,6 @@ class Stop(object):
     def _berth_move_up_operation(self, loc):
         bus = self._buses_in_berth[loc]
         if bus is None: return
-
-        # prt_id = None
-        # if self._buses_in_berth[0] is not None:
-        #     prt_id = self._buses_in_berth[0].bus_id
-        # print(f'bus id: {bus.bus_id}, berth target: {bus.berth_target}, move step: {bus.move_up_step}\
-        #         occu: {prt_id}')
 
         # most downstream berth, check if served
         if loc == (self._berth_num-1):
@@ -434,11 +431,13 @@ class Stop(object):
                                 self._order_marks[b] = bus
                                 bus.is_moving_target_set = True
                                 if bus_in_upstream_place == None:
-                                    bus.react_left_step = 0
+                                    # bus.react_left_step = 0
+                                    bus.react_left_step = bus.REACT_STEPS
                                 else:
-                                    bus.react_left_step = max(bus.REACT_STEPS - bus_in_upstream_place.move_up_step, 0)
+                                    # bus.react_left_step = max(bus.REACT_STEPS - bus_in_upstream_place.move_up_step, 0)
+                                    bus.react_left_step = bus.REACT_STEPS
                                 break
-                        else: # no berth can be oted-in
+                        else: # no berth can be overtoken-in
                             bus.berth_target = None
                             bus.lane_target = None
 
