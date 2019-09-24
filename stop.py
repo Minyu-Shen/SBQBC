@@ -279,7 +279,7 @@ class Stop(object):
             if order_location < which_berth-1: # ordered by a far-away bus (must in the passing lane)
                 is_to_grab = True
             else:
-                # if bus.bus_id == 5:
+                # if bus.bus_id == 9:
                 #     print(order_location, ordered_by_bus.move_up_step)
                 if order_location == which_berth-1 and ordered_by_bus.move_up_step == 0:
                     is_to_grab = True
@@ -292,10 +292,23 @@ class Stop(object):
                 self._order_marks[which_berth+1] = bus
 
                 # set the one being grabbed
-                ordered_by_bus.wish_berth = which_berth
-                ordered_by_bus.is_moving_target_set = False
-                self._remove_old_mark(ordered_by_bus)
-                self._order_marks[which_berth] = ordered_by_bus
+                if order_location == -1: # the grabbed bus is in the queue
+                    # ordered_by_bus.berth_target = None
+                    # ordered_by_bus.lane_target = 0
+                    # ordered_by_bus.wish_berth = which_berth
+                    # self._remove_old_mark(ordered_by_bus)
+                    # self._order_marks[which_berth] = ordered_by_bus
+                    # bus.is_moving_target_set = True
+                    # bus.react_left_step = 0
+                    self.reset_bus_state(ordered_by_bus)
+                    self._remove_old_mark(ordered_by_bus)
+                else:
+                    ordered_by_bus.wish_berth = which_berth
+                    if bus.bus_id == 8:
+                        print('the bus-', ordered_by_bus.bus_id, 'is set: ', ordered_by_bus.wish_berth, 'from ', order_location)
+                    ordered_by_bus.is_moving_target_set = False
+                    self._remove_old_mark(ordered_by_bus)
+                    self._order_marks[which_berth] = ordered_by_bus
                 return True
 
             else: # is ordered and cannot grab, stay still
@@ -329,28 +342,23 @@ class Stop(object):
         bus_in_berth = self._buses_in_berth[check_berth]
         bus_heading_to_berth = self._pre_occupies[check_berth]
         order_by_bus = self._order_marks[check_berth]
-        if bus.bus_id == 5:
-            # print(bus_in_berth.bus_id)
-            print(self.current_time)
-            print('checking berth :', check_berth, '.......')
-            # print()
+        # if bus.bus_id == 9:
+            # print(self.current_time)
+            # print('checking berth :', check_berth, '.......')
         if bus_in_berth == None:
-            if bus.bus_id == 5:
-                # print(bus_in_berth.bus_id)
-                print('berth :', check_berth, 'is empty')
+            # if bus.bus_id == 9:
+                # print('berth :', check_berth, 'is empty')
             if bus_heading_to_berth == None and order_by_bus == None:
                 return True
             else: # the entry queue has the lowest 'grab' power, no need to check 'grab'
-                if bus.bus_id == 5:
-                # print(bus_in_berth.bus_id)
-                    print('bus', bus_heading_to_berth.bus_id, 'is heading to checked berth')
-                # print()
+                # if bus.bus_id == 9:
+                    # print('bus', bus_heading_to_berth.bus_id, 'is heading to checked berth')
                 return False
         else: # the berth is not empty
-            if bus.bus_id == 5:
-                # print(bus_in_berth.bus_id)
-                print('berth :', check_berth, 'is not empty')
-            if bus_in_berth.move_up_step == 0:
+            # if bus.bus_id == 9:
+                # print('berth :', check_berth, 'is not empty')
+            # if bus_in_berth.move_up_step == 0:
+            if bus_in_berth.is_moving_target_set == False:
                 return False
             else:
                 if bus_heading_to_berth == None and order_by_bus == None:
@@ -358,31 +366,6 @@ class Stop(object):
                 else:
                     return False
 
-    # def _get_target_berth_ot_in(self, bus):
-    #     potential_berth = None
-    #     for b in range(self._berth_num-1, 0, -1):
-    #         # check from upstream to downstream
-    #         bus_in_berth = self._buses_in_berth[b]
-    #         bus_heading_to_berth = self._pre_occupies[b]
-    #         order_by_bus = self._order_marks[b]
-    #         # if bus.bus_id == 43:
-    #             # print(bus_in_berth)
-    #         if bus_in_berth == None:
-    #             if bus_heading_to_berth == None and order_by_bus == None:
-    #                 potential_berth = b
-    #                 break
-    #             else: # the entry queue has the lowest 'grab' power, no need to check 'grab'
-    #                 pass
-    #         else: # the berth is not empty
-    #             if bus_in_berth.move_up_step == 0:
-    #                 pass
-    #             else:
-    #                 if bus_heading_to_berth == None and order_by_bus == None:
-    #                     potential_berth = b
-    #                     break
-    #                 else:
-    #                     pass
-    #     return potential_berth
 
     def _remove_old_mark(self, bus):
         for index, ordered_bus in enumerate(self._order_marks):
@@ -476,6 +459,9 @@ class Stop(object):
 
         else: # not served, for overtake-in only
             assert bus.wish_berth is not None, 'wish berth is none, otherwise not be passing lane without being served'
+            # if bus.bus_id == 9:
+            # if bus.wish_berth < loc+1:
+            #     print(bus.bus_id)
             assert bus.wish_berth >= loc+1, 'overpass!'
             if bus.wish_berth == loc+1:
                 bus_in_next_berth = self._buses_in_berth[loc+1]
@@ -566,6 +552,14 @@ class Stop(object):
                 bus.berth_target = which_berth # stay still and serve
                 bus.lane_target = None
                 return
+            # if bus.bus_id == 8:
+            #     print(bus.wish_berth, self.current_time)
+            # # -1. the overtake-in wish berth matches! directly serve, future...
+            # if bus.wish_berth == which_berth:
+            #     bus.berth_target = which_berth # stay still and serve
+            #     bus.lane_target = None
+            #     bus.wish_berth = None
+
             # not the most-downstream berth ...
             # already in the berth, three cases
             # 0. bus is serving
@@ -579,12 +573,17 @@ class Stop(object):
 
                 if bus_running_next_berth is None: # the next berth is empty
                     if self._pre_occupies[which_berth+1] == None: # no bus heading to it
-                        bus.berth_target = which_berth+1
-                        bus.lane_target = None
-                        self._remove_old_mark(bus)
-                        self._order_marks[which_berth+1] = bus
-                        bus.react_left_step = 0
-                        bus.is_moving_target_set = True
+                        is_set = self._check_grab_and_set_for_berth(which_berth)
+                        if is_set:
+                            bus.is_moving_target_set = True
+                            bus.react_left_step = 0
+
+                        # bus.berth_target = which_berth+1
+                        # bus.lane_target = None
+                        # self._remove_old_mark(bus)
+                        # self._order_marks[which_berth+1] = bus
+                        # bus.react_left_step = 0
+                        # bus.is_moving_target_set = True
                     else: # one bus is heading to it, start to serve~
                         bus.berth_target = which_berth
                         bus.lane_target = None

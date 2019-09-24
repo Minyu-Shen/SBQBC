@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 def sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent, c_H=1.0):
 
     ######## hyper-parameters ########
-    duration = 3600 * 100
+    duration = 3600 * 15
 
     ######## simulation ########
     bus_flows = {0: [f, c_H]} # [x:buses/hr, y: c.v.]
@@ -61,7 +61,7 @@ def plot_time_space(berth_num, total_buses, duration, sim_delta):
             x_tuple = (x_list[i], x_list[i+1])
 
             if y_list[i+1] > 8:
-               plt.plot(x_tuple, y_tuple, colors[j], linestyle='dotted', linewidth=3)
+               plt.plot(x_tuple, y_tuple, colors[j], linestyle='dotted', linewidth=1)
             else:
                 plt.plot(x_tuple, y_tuple, colors[j])
 
@@ -74,14 +74,14 @@ def plot_time_space(berth_num, total_buses, duration, sim_delta):
 if __name__ == "__main__":
 
     ######### parameters ########
-    berth_num = 3
+    berth_num = 2
     # 'LO-Out','LO-In-Bus','FO-Bus','LO-In-Lane', 'FO-Lane'
     # queue_rule = 'LO-Out'
     # queue_rule = 'FIFO'
     queue_rule = 'FO-Bus'
     f = 100.0 # buses/hr
     mu_S = 25 # seconds
-    c_S = 0.2
+    c_S = 0.8
     c_H = 0.4 # arrival headway variation
     persistent = True
 
@@ -91,8 +91,6 @@ if __name__ == "__main__":
 
 
     ######### for desired setting ########
-    # c_Ss = [0.3, 0.4]
-
     c_Ss = [0.1*x for x in range(11)]
 
     # rules = ['FIFO', 'LO-Out']

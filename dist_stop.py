@@ -59,3 +59,19 @@ class DistStop(Stop, DistDwell):
         self._service_process(t)
     
         self._entry_queue_operation(t)
+
+        # for bbb in self._buses_in_berth:
+        #     if bbb is not None and bbb.bus_id == 9:
+        #         print(bbb.wish_berth, t)
+        # for bbb in self._place_buses_running:
+        #     if bbb is not None and bbb.bus_id == 9:
+        #         print(bbb.wish_berth, t)
+
+        # for bbb in self._buses_serving:
+        #     if bbb is not None and bbb.bus_id == 9:
+        #         print(bbb.wish_berth, t)
+
+        # if self._buses_in_berth[2] is not None:
+        #     print('~~~~~', self.current_time, self._buses_in_berth[2].bus_id)
+        # else:
+        #     print('~~~~~~', self.current_time, 'None')
