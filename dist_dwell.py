@@ -11,7 +11,7 @@ class DistDwell(object):
         return self._rt_dwell_times[rt].pop()
 
     def _dwell_time_gen(self):
-        random_time_num = 100000
+        random_time_num = 400000
         np.random.seed(3)
         for rt, dist in self._route_dists.items():
             mean_serv, cv_serv = dist[0], dist[1]

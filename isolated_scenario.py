@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 def sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent, c_H=1.0):
 
     ######## hyper-parameters ########
-    duration = 3600 * 15
+    duration = 3600 * 500
 
     ######## simulation ########
     bus_flows = {0: [f, c_H]} # [x:buses/hr, y: c.v.]
@@ -44,12 +44,14 @@ def sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent, c
 
 def plot_time_space(berth_num, total_buses, duration, sim_delta):
     jam_spacing = 10
-    colors = ['r','g','b','y','k']
+    colors = ['r','g','b','y','k', 'w']
     count = 0
     sorted_list = sorted(total_buses, key=lambda x: x.bus_id, reverse=False)
     for bus in sorted_list:
         # print(bus.bus_id)
         j = count % 5
+        # if count == 0:
+            # j = 5
         lists = sorted(bus.trajectory_locations.items()) # sorted by key, return a list of tuples
         x, y = zip(*lists) # unpack a list of pairs into two tuples
         x_list = list(x)
@@ -74,14 +76,14 @@ def plot_time_space(berth_num, total_buses, duration, sim_delta):
 if __name__ == "__main__":
 
     ######### parameters ########
-    berth_num = 2
+    berth_num = 4
     # 'LO-Out','LO-In-Bus','FO-Bus','LO-In-Lane', 'FO-Lane'
     # queue_rule = 'LO-Out'
     # queue_rule = 'FIFO'
     queue_rule = 'FO-Bus'
     f = 100.0 # buses/hr
     mu_S = 25 # seconds
-    c_S = 0.8
+    c_S = 0.9
     c_H = 0.4 # arrival headway variation
     persistent = True
 
@@ -95,7 +97,7 @@ if __name__ == "__main__":
 
     # rules = ['FIFO', 'LO-Out']
     rules = ['FO-Bus']
-    rules = ['FIFO', 'LO-Out', 'FO-Bus']
+    # rules = ['FIFO', 'LO-Out', 'FO-Bus']
 
     rule_capacities = {}
     for queue_rule in rules:

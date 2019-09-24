@@ -61,14 +61,14 @@ class DistStop(Stop, DistDwell):
         self._entry_queue_operation(t)
 
         # for bbb in self._buses_in_berth:
-        #     if bbb is not None and bbb.bus_id == 9:
+        #     if bbb is not None and bbb.bus_id == 15:
         #         print(bbb.wish_berth, t)
         # for bbb in self._place_buses_running:
-        #     if bbb is not None and bbb.bus_id == 9:
+        #     if bbb is not None and bbb.bus_id == 15:
         #         print(bbb.wish_berth, t)
 
         # for bbb in self._buses_serving:
-        #     if bbb is not None and bbb.bus_id == 9:
+        #     if bbb is not None and bbb.bus_id == 15:
         #         print(bbb.wish_berth, t)
 
         # if self._buses_in_berth[2] is not None:

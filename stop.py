@@ -118,7 +118,6 @@ class Stop(object):
     def _lane_operation(self, loc):
         bus = self._place_buses_running[loc]
         if bus is None: return
-        # print(bus.bus_id, loc, bus.lane_target, bus.wish_berth)
         if loc == (self._berth_num-1):
             # in future add reaction time if there is buffer
             # if 0 <= bus.move_up_step < bus.MOVE_UP_STEPS:
@@ -197,6 +196,7 @@ class Stop(object):
             else:
                 # already the most-downstream stop, start to serve!
                 self._buses_serving[loc] = bus
+                return
 
         # not the most-downstream berth ...
         if bus.lane_target is None: # check if can move to the next berth
@@ -279,8 +279,6 @@ class Stop(object):
             if order_location < which_berth-1: # ordered by a far-away bus (must in the passing lane)
                 is_to_grab = True
             else:
-                # if bus.bus_id == 9:
-                #     print(order_location, ordered_by_bus.move_up_step)
                 if order_location == which_berth-1 and ordered_by_bus.move_up_step == 0:
                     is_to_grab = True
             if is_to_grab:
@@ -304,8 +302,6 @@ class Stop(object):
                     self._remove_old_mark(ordered_by_bus)
                 else:
                     ordered_by_bus.wish_berth = which_berth
-                    if bus.bus_id == 8:
-                        print('the bus-', ordered_by_bus.bus_id, 'is set: ', ordered_by_bus.wish_berth, 'from ', order_location)
                     ordered_by_bus.is_moving_target_set = False
                     self._remove_old_mark(ordered_by_bus)
                     self._order_marks[which_berth] = ordered_by_bus
@@ -459,9 +455,6 @@ class Stop(object):
 
         else: # not served, for overtake-in only
             assert bus.wish_berth is not None, 'wish berth is none, otherwise not be passing lane without being served'
-            # if bus.bus_id == 9:
-            # if bus.wish_berth < loc+1:
-            #     print(bus.bus_id)
             assert bus.wish_berth >= loc+1, 'overpass!'
             if bus.wish_berth == loc+1:
                 bus_in_next_berth = self._buses_in_berth[loc+1]
@@ -482,7 +475,6 @@ class Stop(object):
                             bus.react_left_step = max(bus.REACT_STEPS - bus_in_next_berth.move_up_step, 0)
                             bus.is_moving_target_set = True
                         else:
-                            # print(bus.bus_id, '\'s the moving target is:', bus.is_moving_target_set)
                             bus.lane_target = loc
                             bus.berth_target = None
 
