@@ -31,6 +31,7 @@ class DistStop(Stop, DistDwell):
                     
 
     def process(self, t):
+        self.current_time = t
         self.update_time_space(t)
 
         # if self._order_marks[1] is not None:

@@ -1,5 +1,5 @@
 import hyper_parameters as paras
-# from collections import defaultdict
+from collections import defaultdict
 
 class Bus(object):
     # board_rate = 0.25 # pax/sec
@@ -36,6 +36,7 @@ class Bus(object):
         self.trajectory_times = []
         self.lane_trajectory = []
         self.lane_trajectory_times = []
+        self.trajectory_locations = defaultdict(float)
         
         self.service_start = None
         self.service_end = None

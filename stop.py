@@ -29,6 +29,7 @@ class Stop(object):
 
         # stats
         self.exit_counting = 0 # observer at the exit of stop
+        self.current_time = 0
         
 
     def get_entry_queue_length(self):
@@ -47,25 +48,17 @@ class Stop(object):
 
     ########################## time-space info ##########################
     def update_time_space(self, current_time):
+        
         for bus in self._entry_queue._buses:
-            bus.trajectory.append(bus.move_up_step / bus.MOVE_UP_STEPS)
-            bus.trajectory_times.append(current_time)
-            # if bus.bus_id == 42:
-                # print('in queue, 42\'s berth target:', bus.berth_target, ', wish berth: ', bus.wish_berth)
+            bus.trajectory_locations[current_time] = 0
         for b in range(self._berth_num):
             bus = self._buses_in_berth[b]
             if bus is None: continue
-            # if bus.bus_id == 42:
-                # print('in berth-', b ,'42\'s berth target:', bus.berth_target, ', wish berth: ', bus.wish_berth)
-            bus.trajectory.append(b + 1 + (bus.move_up_step / bus.MOVE_UP_STEPS))
-            bus.trajectory_times.append(current_time)
+            bus.trajectory_locations[current_time] = b + 1
         for place in range(self._berth_num):
             bus = self._place_buses_running[place]
             if bus is None: continue
-            # if bus.bus_id == 42:
-                # print('in lane-', place ,'42\'s berth target:', bus.berth_target, ', wish berth: ', bus.wish_berth)
-            bus.lane_trajectory.append(place + 1 + (bus.move_up_step / bus.MOVE_UP_STEPS))
-            bus.lane_trajectory_times.append(current_time)
+            bus.trajectory_locations[current_time] = 11 + place
 
     ########################## operations ##########################
 
@@ -90,8 +83,6 @@ class Stop(object):
             assert bus.lane_target == 0, 'the lane target must be the most-upstream place'
             if bus.react_left_step > 0:
                 bus.react_left_step -= 1
-                # print(bus.bus_id)
-                # print(current_time)
             else:
                 if 0 <= bus.move_up_step < bus.MOVE_UP_STEPS:
                     self._place_pre_occupies[0] = bus
@@ -334,16 +325,31 @@ class Stop(object):
         
         return (None, None)
 
-    def _check_ot_in_berth_from_queue(self, check_berth):
+    def _check_ot_in_berth_from_queue(self, check_berth, bus):
         bus_in_berth = self._buses_in_berth[check_berth]
         bus_heading_to_berth = self._pre_occupies[check_berth]
         order_by_bus = self._order_marks[check_berth]
+        if bus.bus_id == 5:
+            # print(bus_in_berth.bus_id)
+            print(self.current_time)
+            print('checking berth :', check_berth, '.......')
+            # print()
         if bus_in_berth == None:
+            if bus.bus_id == 5:
+                # print(bus_in_berth.bus_id)
+                print('berth :', check_berth, 'is empty')
             if bus_heading_to_berth == None and order_by_bus == None:
                 return True
             else: # the entry queue has the lowest 'grab' power, no need to check 'grab'
+                if bus.bus_id == 5:
+                # print(bus_in_berth.bus_id)
+                    print('bus', bus_heading_to_berth.bus_id, 'is heading to checked berth')
+                # print()
                 return False
         else: # the berth is not empty
+            if bus.bus_id == 5:
+                # print(bus_in_berth.bus_id)
+                print('berth :', check_berth, 'is not empty')
             if bus_in_berth.move_up_step == 0:
                 return False
             else:
@@ -392,8 +398,8 @@ class Stop(object):
             ######### update buses in the berths #########
             self._berth_target_update(loc)
 
-            ######### update buses in the entry queue #########
-            self._entry_queue_target_update(current_time)
+        ######### update buses in the entry queue #########
+        self._entry_queue_target_update(current_time)
 
     def _entry_queue_target_update(self, current_time):
         if self._entry_queue.get_queue_length() == 0: return
@@ -422,7 +428,7 @@ class Stop(object):
                     bus_in_upstream_place = self._place_buses_running[0]
                     if bus_in_upstream_place == None or bus_in_upstream_place.move_up_step > 0:
                         for b in range(self._berth_num-1, 0, -1):
-                            can_ot_in = self._check_ot_in_berth_from_queue(b)
+                            can_ot_in = self._check_ot_in_berth_from_queue(b, bus)
                             if can_ot_in == True:
                                 bus.berth_target = None
                                 bus.lane_target = 0
@@ -444,6 +450,8 @@ class Stop(object):
                     else: # the upstream place is not available
                         bus.berth_target = None
                         bus.lane_target = None
+                    
+                    
                 else: # the rule is not allowed
                     bus.lane_target = None
                     bus.berth_target = None
