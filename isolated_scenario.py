@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 def sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent, c_H=1.0):
 
     ######## hyper-parameters ########
-    duration = 3600 * 500
+    duration = 3600 * 0.1
 
     ######## simulation ########
     bus_flows = {0: [f, c_H]} # [x:buses/hr, y: c.v.]
@@ -37,7 +37,8 @@ def sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent, c
                 total_buses.append(bus)
                 stop.bus_arrival(bus, t)
     
-    # plot_time_space(berth_num, total_buses, duration, paras.sim_delta)
+    if duration < 1800:
+        plot_time_space(berth_num, total_buses, duration, paras.sim_delta)
     # calculate discharing flow and return
     return stop.exit_counting / (duration*1.0)
 
@@ -74,51 +75,60 @@ def plot_time_space(berth_num, total_buses, duration, sim_delta):
 
 
 if __name__ == "__main__":
-
+    is_time_space = 1
     ######### parameters ########
     berth_num = 4
     # 'LO-Out','LO-In-Bus','FO-Bus','LO-In-Lane', 'FO-Lane'
     # queue_rule = 'LO-Out'
     # queue_rule = 'FIFO'
     queue_rule = 'FO-Bus'
+    # queue_rule = 'FO-Lane'
     f = 100.0 # buses/hr
     mu_S = 25 # seconds
-    c_S = 0.9
+    c_S = 1.0
     c_H = 0.4 # arrival headway variation
     persistent = True
 
+    if is_time_space:
+        sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent)
     ######### for plotting time-space diagram ########
-    # sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent)
-    ######### for plotting time-space diagram ########
+    else:
 
+        ######### for desired setting ########
+        c_Ss = [0.1*x for x in range(11)]
 
-    ######### for desired setting ########
-    c_Ss = [0.1*x for x in range(11)]
+        # rules = ['FIFO', 'LO-Out']
+        # rules = ['FO-Bus']
+        # rules = ['FO-Lane']
+        # rules = ['LO-Out', 'FO-Bus']
+        # rules = ['FIFO', 'LO-Out', 'FO-Bus']
+        # rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane']
+        rules = ['FIFO', 'LO-Out', 'FO-Lane']
+        # rules = ['LO-Out', 'FO-Bus', 'FO-Lane']
 
-    # rules = ['FIFO', 'LO-Out']
-    rules = ['FO-Bus']
-    # rules = ['FIFO', 'LO-Out', 'FO-Bus']
+        rule_capacities = {}
+        for queue_rule in rules:
+            capacities = []
+            for c_S in c_Ss:
+                print(c_S)
+                cpt = sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent)
+                capacities.append(cpt * 3600.0)
+            rule_capacities[queue_rule] = capacities
+        print(rule_capacities)
 
-    rule_capacities = {}
-    for queue_rule in rules:
-        capacities = []
-        for c_S in c_Ss:
-            print(c_S)
-            cpt = sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent)
-            capacities.append(cpt * 3600.0)
-        rule_capacities[queue_rule] = capacities
-    print(rule_capacities)
+        # plotting ...
+        plt, ax = set_x_y_draw('C_S', 'buses/hr')
+        line_styles = ['-', ':', '--', '-.']
+        rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane']
+        rule2style = {rules[i]: line_styles[i] for i in range(len(rules))}
 
-    # plotting ...
-    plt, ax = set_x_y_draw('C_S', 'buses/hr')
-    line_styles = ['-', '--', ':', '-.']
-    rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane']
-    rule2style = {rules[i]: line_styles[i] for i in range(len(rules))}
+        for rule, capacities in rule_capacities.items():
+            if rule == 'FO-Lane':
+                plt.plot(c_Ss, capacities, 'r', linestyle=rule2style[rule], linewidth=2)
+            else:
+                plt.plot(c_Ss, capacities, 'k', linestyle=rule2style[rule], linewidth=2)
 
-    for rule, capacities in rule_capacities.items():
-        plt.plot(c_Ss, capacities, 'k', linestyle=rule2style[rule], linewidth=2)
+        ax.legend([r'FIFO', r'LO-Out', r'FO-Bus', r'FO-Lane'],\
+            handlelength=3, fontsize=13)
 
-    ax.legend([r'FIFO', r'LO-Out', r'FO-Bus', r'FO-Lane'],\
-        handlelength=3, fontsize=13)
-
-    plt.show()
+        plt.show()
