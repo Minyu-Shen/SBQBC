@@ -33,7 +33,7 @@ class DistStop(Stop, DistDwell):
     def process(self, t):
         self.current_time = t
         self.update_time_space(t)
-
+        # print('~~~', self._place_pre_occupies[2], self.current_time)
         # if self._order_marks[1] is not None:
             # print(self._order_marks[1].bus_id)
 

@@ -12,7 +12,7 @@ class DistDwell(object):
 
     def _dwell_time_gen(self):
         random_time_num = 400000
-        np.random.seed(3)
+        np.random.seed(23)
         for rt, dist in self._route_dists.items():
             mean_serv, cv_serv = dist[0], dist[1]
             if cv_serv == 0:
@@ -21,6 +21,7 @@ class DistDwell(object):
                 shape = 1 / (cv_serv**2)
                 scale = mean_serv / shape
                 serv_time = np.random.gamma(shape, scale, random_time_num).tolist()
+                # serv_time = [0.55 if x <= 0.54 else x for x in serv_time]
         
             self._rt_dwell_times[rt] = serv_time
 
