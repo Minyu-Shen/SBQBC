@@ -257,12 +257,13 @@ class Stop(object):
                         self._place_pre_occupies[loc+1] = bus
                         self._place_order_marks[loc+1] = None
                         bus.move_up_step += 1
-                        if bus.bus_id == 38:
-                            print('berth is moving to lane-', loc+1, 'at step-', bus.move_up_step, self.current_time)
+                        # if bus.bus_id == 38:
+                        #     print('berth is moving to lane-', loc+1, 'at step-', bus.move_up_step, self.current_time)
                     if bus.move_up_step == bus.MOVE_UP_STEPS: # already moved to the lane
                         self._buses_in_berth[loc] = None
                         self._place_pre_occupies[bus.lane_target] = None
                         self._place_buses_running[bus.lane_target] = bus
+                        self._insertion_marks[loc] = False
                         bus.move_up_step = 0
                         bus.is_moving_target_set = False
                         
@@ -342,8 +343,6 @@ class Stop(object):
         # if bus_adjacent is None or bus_adjacent.move_up_step == 0: # no adjacent bus
             bus_next_place = self._place_buses_running[from_which_berth+1]
             if bus_next_place is None: # no adjacent bus and no bus in the next place
-                if bus.bus_id == 2:
-                    print(bus_next_place, self.current_time)
                 if self._place_order_marks[from_which_berth+1] == None:
                     if self._insertion_marks[from_which_berth+1] == False: # the bus in the next berth is fifo in
                         return (from_which_berth+1, 0)
@@ -497,8 +496,8 @@ class Stop(object):
                     else:
                         if self._place_pre_occupies[loc+1] is None:
                             if bus_in_next_berth.move_up_step > 0:
-                                if bus.bus_id == 40:
-                                    print(bus.bus_id, 'from lane to occupy time: ', self.current_time)
+                                # if bus.bus_id == 40:
+                                    # print(bus.bus_id, 'from lane to occupy time: ', self.current_time)
                                 self._remove_old_mark(bus)
                                 self._order_marks[loc+1] = bus
                                 bus.berth_target = loc+1

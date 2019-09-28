@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 def sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent, c_H=1.0):
 
     ######## hyper-parameters ########
-    duration = 3600 * 60
+    duration = 3600 * 0.1
 
     ######## simulation ########
     bus_flows = {0: [f, c_H]} # [x:buses/hr, y: c.v.]
@@ -38,17 +38,23 @@ def sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent, c
                 stop.bus_arrival(bus, t)
     
     if duration < 1800:
-        plot_time_space(berth_num, total_buses, duration, paras.sim_delta)
+        plot_time_space(berth_num, total_buses, duration, paras.sim_delta, stop)
         pass
     # calculate discharing flow and return
     return stop.exit_counting / (duration*1.0)
 
 
-def plot_time_space(berth_num, total_buses, duration, sim_delta):
+def plot_time_space(berth_num, total_buses, duration, sim_delta, stop):
     jam_spacing = 10
-    colors = ['r','g','b','y','k', 'w']
+    colors = ['violet','g','b','y','k','w']
     count = 0
     sorted_list = sorted(total_buses, key=lambda x: x.bus_id, reverse=False)
+    # plot the insertion mark
+    for berth, times in stop.berth_state.items():
+        for i in range(len(times)-1):
+            if times[i] == True or times[i+1] == True:
+                plt.hlines(berth+1, i*sim_delta, (i+1)*sim_delta, 'r', linewidth=8)
+
     for bus in sorted_list:
         # print(bus.bus_id)
         j = count % 5
@@ -68,7 +74,7 @@ def plot_time_space(berth_num, total_buses, duration, sim_delta):
                plt.plot(x_tuple, y_tuple, colors[j], linestyle='dotted', linewidth=1)
             else:
                 plt.plot(x_tuple, y_tuple, colors[j])
-
+        # plot the service time
         if bus.service_berth is not None:
             plt.hlines((bus.service_berth+1), bus.service_start, bus.service_end, 'gray', linewidth=5)
         count += 1
@@ -76,17 +82,17 @@ def plot_time_space(berth_num, total_buses, duration, sim_delta):
 
 
 if __name__ == "__main__":
-    is_time_space = 0
+    is_time_space = 1
     ######### parameters ########
     berth_num = 4
     # 'LO-Out','LO-In-Bus','FO-Bus','LO-In-Lane', 'FO-Lane'
     # queue_rule = 'LO-Out'
     # queue_rule = 'FIFO'
-    # queue_rule = 'FO-Bus'
+    queue_rule = 'FO-Bus'
     queue_rule = 'FO-Lane'
     f = 100.0 # buses/hr
     mu_S = 25 # seconds
-    c_S = 0.15
+    c_S = 1.0
     c_H = 0.4 # arrival headway variation
     persistent = True
 
@@ -107,6 +113,7 @@ if __name__ == "__main__":
         # rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane']
         # rules = ['FIFO', 'LO-Out', 'FO-Lane']
         # rules = ['LO-Out', 'FO-Bus', 'FO-Lane']
+        # rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane', 'LO-In-Bus']
 
         rule_capacities = {}
         for queue_rule in rules:
@@ -120,8 +127,8 @@ if __name__ == "__main__":
 
         # plotting ...
         plt, ax = set_x_y_draw('C_S', 'buses/hr')
-        line_styles = ['-', ':', '--', '-.']
-        rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane']
+        line_styles = ['-', ':', '--', '-.', '-.']
+        rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane', 'LO-In-Bus']
         rule2style = {rules[i]: line_styles[i] for i in range(len(rules))}
 
         for rule, capacities in rule_capacities.items():
@@ -130,7 +137,7 @@ if __name__ == "__main__":
             else:
                 plt.plot(c_Ss, capacities, 'k', linestyle=rule2style[rule], linewidth=2)
 
-        ax.legend([r'FIFO', r'LO-Out', r'FO-Bus', r'FO-Lane'],\
-            handlelength=3, fontsize=13)
+        # ax.legend([r'FIFO', r'LO-Out', r'FO-Bus', r'FO-Lane'],\
+            # handlelength=3, fontsize=13)
 
         plt.show()
