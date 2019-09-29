@@ -12,7 +12,7 @@ class DistDwell(object):
 
     def _dwell_time_gen(self):
         random_time_num = 400000
-        np.random.seed(3)
+        np.random.seed(200)
         for rt, dist in self._route_dists.items():
             mean_serv, cv_serv = dist[0], dist[1]
             if cv_serv == 0:

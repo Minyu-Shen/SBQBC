@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 def sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent, c_H=1.0):
 
     ######## hyper-parameters ########
-    duration = 3600 * 0.1
+    duration = 3600 * 10
 
     ######## simulation ########
     bus_flows = {0: [f, c_H]} # [x:buses/hr, y: c.v.]
@@ -82,7 +82,7 @@ def plot_time_space(berth_num, total_buses, duration, sim_delta, stop):
 
 
 if __name__ == "__main__":
-    is_time_space = 1
+    is_time_space = 0
     ######### parameters ########
     berth_num = 4
     # 'LO-Out','LO-In-Bus','FO-Bus','LO-In-Lane', 'FO-Lane'
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     queue_rule = 'FO-Lane'
     f = 100.0 # buses/hr
     mu_S = 25 # seconds
-    c_S = 1.0
+    c_S = 0.8
     c_H = 0.4 # arrival headway variation
     persistent = True
 
@@ -106,11 +106,11 @@ if __name__ == "__main__":
 
         # rules = ['FIFO', 'LO-Out']
         # rules = ['FO-Bus']
-        rules = ['FO-Bus', 'FO-Lane']
+        # rules = ['FO-Bus', 'FO-Lane']
         # rules = ['FO-Lane']
         # rules = ['LO-Out', 'FO-Bus']
         # rules = ['FIFO', 'LO-Out', 'FO-Bus']
-        # rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane']
+        rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane']
         # rules = ['FIFO', 'LO-Out', 'FO-Lane']
         # rules = ['LO-Out', 'FO-Bus', 'FO-Lane']
         # rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane', 'LO-In-Bus']

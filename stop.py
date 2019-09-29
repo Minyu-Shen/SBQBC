@@ -89,6 +89,8 @@ class Stop(object):
                 bus.react_left_step -= 1
             else:
                 if 0 <= bus.move_up_step < bus.MOVE_UP_STEPS:
+                    # if bus.bus_id == 4:
+                        # print(bus.move_up_step, bus.react_left_step, self.current_time)
                     self._place_pre_occupies[0] = bus
                     bus.move_up_step += 1
                 if bus.move_up_step == bus.MOVE_UP_STEPS:
@@ -293,6 +295,8 @@ class Stop(object):
             is_to_grab = False
             if order_location < which_berth-1: # ordered by a far-away bus (must in the passing lane)
                 is_to_grab = True
+                # if ordered_by_bus.bus_id == 4:
+                        # print('~~~', ordered_by_bus.move_up_step)
             else:
                 if order_location == which_berth-1 and ordered_by_bus.move_up_step == 0:
                 # if order_location == which_berth-1 and ordered_by_bus.move_up_step == 0:
@@ -338,8 +342,8 @@ class Stop(object):
         bus_adjacent = self._place_buses_running[from_which_berth]
         # cross validation
         if self._pre_occupies[from_which_berth+1] is None \
-                and self._place_pre_occupies[from_which_berth+1] is None \
-                    and self._order_marks[from_which_berth+1] is None:
+                and self._place_pre_occupies[from_which_berth+1] is None:
+                    # and self._order_marks[from_which_berth+1] is None:
         # if bus_adjacent is None or bus_adjacent.move_up_step == 0: # no adjacent bus
             bus_next_place = self._place_buses_running[from_which_berth+1]
             if bus_next_place is None: # no adjacent bus and no bus in the next place
