@@ -81,6 +81,7 @@ class Stop(object):
         if self._entry_queue.get_queue_length() == 0: return
         bus = self._entry_queue.get_head_bus(current_time)
         if bus is None: return
+        # if bus.is_moving_target_set == False: return
 
         if bus.lane_target is not None:
             assert bus.wish_berth is not None, 'enter the lane only when there is available wish berth'
@@ -124,6 +125,7 @@ class Stop(object):
     def _lane_operation(self, loc):
         bus = self._place_buses_running[loc]
         if bus is None: return
+        # if bus.is_moving_target_set == False: return
         if loc == (self._berth_num-1):
             # in future add reaction time if there is buffer
             # if 0 <= bus.move_up_step < bus.MOVE_UP_STEPS:
@@ -196,6 +198,7 @@ class Stop(object):
     def _berth_move_up_operation(self, loc):
         bus = self._buses_in_berth[loc]
         if bus is None: return
+        # if bus.is_moving_target_set == False: return
 
         # most downstream berth, check if served
         if loc == (self._berth_num-1):
