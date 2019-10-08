@@ -6,15 +6,15 @@ import hyper_parameters as paras
 from arena import set_x_y_draw
 import matplotlib.pyplot as plt
 
-def sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent, c_H=1.0):
+def sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan=None, c_H=1.0):
 
     ######## hyper-parameters ########
     duration = 3600 * 15
 
     ######## simulation ########
-    bus_flows = {0: [f, c_H]} # [x:buses/hr, y: c.v.]
-    generator = Generator(bus_flows, duration)
-    stop = DistStop(0, berth_num, queue_rule, {0: [mu_S, c_S]}) # [x:mean_dwell, y: c.v. of dwell]
+    # bus_flows = {0: [160.0, 1.0]} # [x:buses/hr, y: c.v.]
+    generator = Generator(flows, duration, assign_plan)
+    stop = DistStop(0, berth_num, queue_rule, services) # [x:mean_dwell, y: c.v. of dwell]
     total_buses = []
     for t in np.arange(0.0, duration, paras.sim_delta):
         ##### from downstream to upstream #####
@@ -97,17 +97,17 @@ if __name__ == "__main__":
     ######### parameters ########
     berth_num = 4
     # 'LO-Out','LO-In-Bus','FO-Bus','LO-In-Lane', 'FO-Lane'
-    # queue_rule = 'LO-Out'
-    # queue_rule = 'FIFO'
     queue_rule = 'FO-Bus'
-    # queue_rule = 'FO-Lane'
     f = 160.0 # buses/hr
     mu_S = 25 # seconds
     c_S = 0.4
     c_H = 1 # arrival headway variation
     persistent = False
+    assign_plan = {0:0, 1:1, 2:2, 3:3} # line -> berth
+    flows = {0: [40, 1.0], 1:[40, 1.0], 2:[40, 1.0], 3:[40, 1.0]} # [buses/hr, c.v.]
+    # flows = {0: [160.0, 1.0]}
+    # services = {0: [25, 0.4], 1: [25, 0.4], 2: [25, 0.4], 3: [25, 0.4]}
 
-    
     ######### for plotting time-space diagram ########
     # sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent)
 
@@ -133,8 +133,8 @@ if __name__ == "__main__":
         for queue_rule in rules:
             capacities = []
             for c_S in c_Ss:
-                print(c_S)
-                cpt = sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent)
+                services = {0: [mu_S, c_S]}
+                cpt = sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan)
                 capacities.append(cpt * 3600.0)
             rule_capacities[queue_rule] = capacities
         print(rule_capacities)
@@ -155,8 +155,9 @@ if __name__ == "__main__":
         for queue_rule in rules:
             delays = []
             for c_S in c_Ss:
-                print(c_S)
-                delay = sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent)
+                services = {0: [mu_S, c_S], 1: [mu_S, c_S], 2: [mu_S, c_S], 3: [mu_S, c_S]}
+                print(services)
+                delay = sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan)
                 delays.append(delay)
             rule_delays[queue_rule] = delays
         print(rule_delays)

@@ -7,9 +7,10 @@ class Bus(object):
     MOVE_UP_STEPS = paras.move_up_steps
     REACT_STEPS = paras.reaction_steps
 
-    def __init__(self, bus_id, route):
+    def __init__(self, bus_id, route, berth=None):
         self.bus_id = bus_id
         self.route = route
+        self.assign_berth = berth
         
         ### stats, for corridor, it should be changed to a list, future work ...
         self.arr_mmt = None # the time when a bus arrives in the entry queue
@@ -19,9 +20,9 @@ class Bus(object):
         self.enter_delay = 0.0
         self.exit_delay = 0.0
 
-        self.arr_time = -1.0 # arrived time at stops, negative means not arrived; 
-        self.etr_time = -1.0
-        self.dpt_time = -1.0
+        # self.arr_time = -1.0 # arrived time at stops, negative means not arrived; 
+        # self.etr_time = -1.0
+        # self.dpt_time = -1.0
         self.serv_time = -1.0
         
         # 'leaving', '1', '2', ... target berth
