@@ -31,6 +31,7 @@ class DistStop(Stop, DistDwell):
                     if bus.service_berth == None:
                         bus.service_berth = berth_index
                     bus.is_served = True
+                    self._remove_from_service_list(bus)
                     
 
     def process(self, t):
@@ -40,8 +41,7 @@ class DistStop(Stop, DistDwell):
         ### 0. update the target berth and target place
         self._update_targets(t)
 
-        # check lane and berth, alternately
-        # from downstream to upstream
+        # check lane and berth, alternately, from downstream to upstream
         for loc in range(self._berth_num-1,-1,-1):
             self.berth_state[loc].append(self._insertion_marks[loc])
             
@@ -54,5 +54,34 @@ class DistStop(Stop, DistDwell):
 
         ### 3. stop (berths) service operations
         self._service_process(t)
-    
         self._entry_queue_operation(t)
+
+        ### 4. accumulate delays
+        self._accumulate_delays()
+
+    def _accumulate_delays(self):
+        # 1. update enter delay in the queue
+        self._entry_queue.accumulate_delay() 
+        # 2. update delay in the passing lane
+        for bus in self._place_buses_running:
+            if bus is None: continue
+            if bus.is_moving_target_set == False:
+                if bus.is_served:
+                    bus.exit_delay += Stop.SIM_DELTA
+                else:
+                    bus.enter_delay += Stop.SIM_DELTA
+        # 3. update delay in the berth
+        for bus in self._buses_in_berth:
+            if bus is None: continue
+            if bus not in self._buses_serving:
+                if bus.is_moving_target_set == False:
+                    if bus.is_served:
+                        bus.exit_delay += Stop.SIM_DELTA
+                    else:
+                        bus.enter_delay += Stop.SIM_DELTA
+
+    def _remove_from_service_list(self, bus):
+        for index, removed_bus in enumerate(self._buses_serving):
+            if removed_bus == bus:
+                self._buses_serving[index] = None
+                break

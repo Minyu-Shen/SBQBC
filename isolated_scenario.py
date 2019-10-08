@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 def sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent, c_H=1.0):
 
     ######## hyper-parameters ########
-    duration = 3600 * 10
+    duration = 3600 * 15
 
     ######## simulation ########
     bus_flows = {0: [f, c_H]} # [x:buses/hr, y: c.v.]
@@ -51,6 +51,7 @@ def sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent, c
             if bus.dpt_stop_mmt is not None: # only count the buses that have left the stop
                 # bus_delay_count += bus.dpt_stop_mmt - bus.arr_mmt - (bus.service_end_mmt - bus.service_start_mmt)
                 bus_delay_count += bus.enter_delay
+                bus_delay_count += bus.exit_delay
                 bus_count += 1
         return bus_delay_count / bus_count*1.0
 
@@ -100,11 +101,11 @@ if __name__ == "__main__":
     # queue_rule = 'FIFO'
     queue_rule = 'FO-Bus'
     # queue_rule = 'FO-Lane'
-    f = 145.0 # buses/hr
+    f = 160.0 # buses/hr
     mu_S = 25 # seconds
     c_S = 0.4
     c_H = 1 # arrival headway variation
-    persistent = True
+    persistent = False
 
     
     ######### for plotting time-space diagram ########
@@ -168,6 +169,6 @@ if __name__ == "__main__":
             else:
                 plt.plot(c_Ss, delays, 'k', linestyle=rule2style[rule], linewidth=2)
 
-        ax.legend(['FIFO', 'LO-Out', 'FO-Bus'], handlelength=3, fontsize=13)
+        ax.legend(rules, handlelength=3, fontsize=13)
 
         plt.show()

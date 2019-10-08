@@ -55,14 +55,10 @@ class Stop(object):
             bus = self._buses_in_berth[b]
             if bus is None: continue
             bus.trajectory_locations[current_time] = b + 1
-            # if bus.bus_id == 9:
-            #     print('in the berth', bus.wish_berth, bus.serv_time)
         for place in range(self._berth_num):
             bus = self._place_buses_running[place]
             if bus is None: continue
             bus.trajectory_locations[current_time] = 11 + place
-            # if bus.bus_id == 9:
-                # print('in the lane', bus.bus_id)
 
     ########################## operations ##########################
 
@@ -259,7 +255,7 @@ class Stop(object):
             if self._insertion_marks[bus.lane_target] == True:
                 assert self._queue_rule in ['FO-Bus','LO-In-Lane','FO-Lane'], 'must be the overtake-in rules'
                 # print(bus.bus_id)
-                # assert bus.move_up_step == 0, 'the bus should not be in moving'
+                assert bus.move_up_step == 0, 'the bus should not be in moving'
                 # do nothing, just record exit delay
                 # if bus.bus_id == 38:
                     # print(bus.move_up_step, self._insertion_marks[bus.lane_target], self.current_time)
@@ -404,7 +400,6 @@ class Stop(object):
 
     def _entry_queue_target_update(self, current_time):
         if self._entry_queue.get_queue_length() == 0: return
-        self._entry_queue.accumulate_delay() # update enter delay
         bus = self._entry_queue.get_head_bus(current_time)
         if bus is None: return
         if bus.is_moving_target_set == True: return
@@ -432,10 +427,7 @@ class Stop(object):
                             self._remove_old_mark(bus)
                             self._order_marks[b] = bus
                             bus.is_moving_target_set = True
-                            if bus_in_upstream_place == None:
-                                bus.react_left_step = bus.REACT_STEPS
-                            else:
-                                bus.react_left_step = max(bus.REACT_STEPS - bus_in_upstream_place.move_up_step, 0)
+                            bus.react_left_step = bus.REACT_STEPS if bus_in_upstream_place == None else max(bus.REACT_STEPS - bus_in_upstream_place.move_up_step, 0)
                             break
 
             if head_bus_can_move == False:
