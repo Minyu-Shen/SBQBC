@@ -12,13 +12,18 @@ class Bus(object):
         self.route = route
         
         ### stats, for corridor, it should be changed to a list, future work ...
+        self.arr_mmt = None # the time when a bus arrives in the entry queue
+        self.dpt_stop_mmt = None # the time when a bus leaves stop
+        self.service_start_mmt = None # the time when a bus enters the berth to serve
+        self.service_end_mmt = None # the time when a bus finishes service
+        self.enter_delay = 0.0
+        self.exit_delay = 0.0
+
         self.arr_time = -1.0 # arrived time at stops, negative means not arrived; 
         self.etr_time = -1.0
         self.dpt_time = -1.0
         self.serv_time = -1.0
-        self.enter_delay = 0.0
-        self.exit_delay = 0.0
-
+        
         # 'leaving', '1', '2', ... target berth
         self.berth_target = None
         self.lane_target = None
@@ -38,8 +43,6 @@ class Bus(object):
         self.lane_trajectory_times = []
         self.trajectory_locations = defaultdict(float)
         
-        self.service_start = None
-        self.service_end = None
         self.service_berth = None
     # def record_trajectory(self, curr_t):
     #     pass

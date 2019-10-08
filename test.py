@@ -24,12 +24,12 @@ if __name__ == "__main__":
     # s.property = 100000
     # print(a[0].property )
 
-
-
-    # a = A(10)
-    # b = A(20)
-    # list1 = [a, b]
-    # list2 = [a, b]
+    a = A(10)
+    b = A(20)
+    list1 = [a, b]
+    list2 = [a, b]
+    list1[0].property = 50
+    print(list2[0].property)
     # print(list1[0].property)
     # list2[0].property = 1000
     # print(list1[0].property)
@@ -48,9 +48,9 @@ if __name__ == "__main__":
     # print(a.get_something())
 
     # 1.
-    a = A(10)
-    change(a)
-    print(a.property)
+    # a = A(10)
+    # change(a)
+    # print(a.property)
 
     # 2.
     # import math

@@ -69,11 +69,13 @@ class Stop(object):
     def _berth_discharge_to_buffer(self):
         self.exit_counting += 1
         # self._buses_in_berth[self._berth_num-1].is_moving_target_set = False
+        self._buses_in_berth[self._berth_num-1].dpt_stop_mmt = self.current_time
         self._buses_in_berth[self._berth_num-1] = None
         self._insertion_marks[self._berth_num-1] = False
         
     def _lane_discharge_to_buffer(self):
         # self._place_buses_running[self._berth_num-1].is_moving_target_set = False
+        self._place_buses_running[self._berth_num-1].dpt_stop_mmt = self.current_time
         self._place_buses_running[self._berth_num-1] = None
         self.exit_counting += 1
 
@@ -89,10 +91,10 @@ class Stop(object):
             if bus.react_left_step > 0:
                 bus.react_left_step -= 1
             else:
-                if 0 <= bus.move_up_step < bus.MOVE_UP_STEPS:
-                    # if bus.bus_id == 4:
-                        # print(bus.move_up_step, bus.react_left_step, self.current_time)
+                if bus.move_up_step == 0:
                     self._place_pre_occupies[0] = bus
+                    bus.move_up_step += 1
+                else:
                     bus.move_up_step += 1
                 if bus.move_up_step == bus.MOVE_UP_STEPS:
                     # already maneuver into the place
@@ -108,8 +110,10 @@ class Stop(object):
                 if bus.react_left_step > 0:
                     bus.react_left_step -= 1
                 else: # reaction finish, move up
-                    if 0 <= bus.move_up_step < bus.MOVE_UP_STEPS:
+                    if bus.move_up_step == 0:
                         self._pre_occupies[0] = bus
+                        bus.move_up_step += 1
+                    else:
                         bus.move_up_step += 1
                     if bus.move_up_step == bus.MOVE_UP_STEPS:
                         # already maneuver into the place
@@ -145,10 +149,12 @@ class Stop(object):
                     if bus.react_left_step > 0:
                         bus.react_left_step -= 1
                     else:
-                        if 0 <= bus.move_up_step < bus.MOVE_UP_STEPS:
+                        if bus.move_up_step == 0:
                             self._pre_occupies[bus.berth_target] = bus
                             self._order_marks[bus.berth_target] = None
                             self._insertion_marks[bus.berth_target] = True
+                            bus.move_up_step += 1
+                        else:
                             bus.move_up_step += 1
                         if bus.move_up_step == bus.MOVE_UP_STEPS: # has already reached the next berth
                             self._place_buses_running[loc] = None
@@ -157,15 +163,17 @@ class Stop(object):
                             self.reset_bus_state(bus)
                             if bus.wish_berth == loc+1:
                                 bus.wish_berth = None
-                            # self._buses_serving[loc+1] = bus
+
                 else: # cannot enter the berth
                     if bus.lane_target == loc+1: # move the next place
                         if bus.react_left_step > 0:
                             bus.react_left_step -= 1
                         else:
-                            if 0 <= bus.move_up_step < bus.MOVE_UP_STEPS:
+                            if bus.move_up_step == 0:
                                 self._place_pre_occupies[bus.lane_target] = bus
                                 self._place_order_marks[loc+1] = None
+                                bus.move_up_step += 1
+                            else:
                                 bus.move_up_step += 1
                             if bus.move_up_step == bus.MOVE_UP_STEPS:
                                 self._place_buses_running[loc] = None
@@ -183,9 +191,11 @@ class Stop(object):
                     if bus.react_left_step > 0:
                         bus.react_left_step -= 1
                     else:
-                        if 0 <= bus.move_up_step < bus.MOVE_UP_STEPS:
+                        if bus.move_up_step == 0:
                             self._place_pre_occupies[bus.lane_target] = bus
                             self._place_order_marks[loc+1] = None
+                            bus.move_up_step += 1
+                        else:
                             bus.move_up_step += 1
                         if bus.move_up_step == bus.MOVE_UP_STEPS:
                             self._place_buses_running[loc] = None
@@ -218,15 +228,15 @@ class Stop(object):
                 if bus.react_left_step > 0:
                     bus.react_left_step -= 1
                 else:
-                    if 0 <= bus.move_up_step < bus.MOVE_UP_STEPS:
+                    if bus.move_up_step == 0:
                         self._pre_occupies[bus.berth_target] = bus
                         self._order_marks[bus.berth_target] = None # already head to it, remove order
+                        bus.move_up_step += 1
+                    else:
                         bus.move_up_step += 1
                     if bus.move_up_step == bus.MOVE_UP_STEPS: # has already reached the next berth
                         self._buses_in_berth[loc] = None
                         self._insertion_marks[loc] = False
-                        # if bus.bus_id == 40:
-                            # print('~~~', loc, bus.move_up_step, self.current_time)
                         self._pre_occupies[bus.berth_target] = None
                         self._buses_in_berth[bus.berth_target] = bus
                         bus.move_up_step = 0
@@ -258,12 +268,12 @@ class Stop(object):
                     self._place_pre_occupies[loc+1] = bus
                     bus.react_left_step -= 1
                 else:
-                    if 0 <= bus.move_up_step < bus.MOVE_UP_STEPS:
+                    if bus.move_up_step == 0:
                         self._place_pre_occupies[loc+1] = bus
                         self._place_order_marks[loc+1] = None
                         bus.move_up_step += 1
-                        # if bus.bus_id == 38:
-                        #     print('berth is moving to lane-', loc+1, 'at step-', bus.move_up_step, self.current_time)
+                    else:
+                        bus.move_up_step += 1
                     if bus.move_up_step == bus.MOVE_UP_STEPS: # already moved to the lane
                         self._buses_in_berth[loc] = None
                         self._place_pre_occupies[bus.lane_target] = None
@@ -271,7 +281,6 @@ class Stop(object):
                         self._insertion_marks[loc] = False
                         bus.move_up_step = 0
                         bus.is_moving_target_set = False
-                        
 
 
     ########################## target updates ##########################
@@ -298,11 +307,8 @@ class Stop(object):
             is_to_grab = False
             if order_location < which_berth-1: # ordered by a far-away bus (must in the passing lane)
                 is_to_grab = True
-                # if ordered_by_bus.bus_id == 4:
-                        # print('~~~', ordered_by_bus.move_up_step)
             else:
                 if order_location == which_berth-1 and ordered_by_bus.move_up_step == 0:
-                # if order_location == which_berth-1 and ordered_by_bus.move_up_step == 0:
                     is_to_grab = True
             if is_to_grab:
                 # set itself
@@ -314,13 +320,6 @@ class Stop(object):
 
                 # set the one being grabbed
                 if order_location == -1: # the grabbed bus is in the queue
-                    # ordered_by_bus.berth_target = None
-                    # ordered_by_bus.lane_target = 0
-                    # ordered_by_bus.wish_berth = which_berth
-                    # self._remove_old_mark(ordered_by_bus)
-                    # self._order_marks[which_berth] = ordered_by_bus
-                    # bus.is_moving_target_set = True
-                    # bus.react_left_step = 0
                     self.reset_bus_state(ordered_by_bus)
                     self._remove_old_mark(ordered_by_bus)
                 else:
@@ -405,58 +404,43 @@ class Stop(object):
 
     def _entry_queue_target_update(self, current_time):
         if self._entry_queue.get_queue_length() == 0: return
+        self._entry_queue.accumulate_delay() # update enter delay
         bus = self._entry_queue.get_head_bus(current_time)
         if bus is None: return
         if bus.is_moving_target_set == True: return
 
         bus_in_upstream_berth = self._buses_in_berth[0]
-        if bus_in_upstream_berth is None:
-            # no bus can 'jump' out of the entry queue and head to the most-upstream berth
+        if bus_in_upstream_berth is None or bus_in_upstream_berth.move_up_step > 0:
+            bus.is_moving_target_set = True
             bus.berth_target = 0
             bus.lane_target = None
-            bus.react_left_step = 0
             bus.wish_berth = None
-            bus.is_moving_target_set = True
-        else:
-            if bus_in_upstream_berth.move_up_step > 0: # will move next step
-                bus.berth_target = 0
-                bus.lane_target = None
-                bus.wish_berth = None
-                bus.react_left_step = max(bus.REACT_STEPS - bus_in_upstream_berth.move_up_step, 0)
-                bus.is_moving_target_set = True
-            else: # the bus in the upstream berth will be still
-                # check if can overtake into the berth
-                if self._queue_rule in ['LO-In-Bus', 'FO-Bus', 'FO-Lane', 'LO-In-Lane']:
-                    bus_in_upstream_place = self._place_buses_running[0]
-                    if bus_in_upstream_place == None or bus_in_upstream_place.move_up_step > 0:
-                        for b in range(self._berth_num-1, 0, -1):
-                            can_ot_in = self._check_ot_in_berth_from_queue(b, bus)
-                            if can_ot_in == True:
-                                bus.berth_target = None
-                                bus.lane_target = 0
-                                bus.wish_berth = b
-                                self._remove_old_mark(bus)
-                                self._order_marks[b] = bus
-                                bus.is_moving_target_set = True
-                                if bus_in_upstream_place == None:
-                                    # bus.react_left_step = 0 # ~~~
-                                    bus.react_left_step = bus.REACT_STEPS
-                                else:
-                                    bus.react_left_step = max(bus.REACT_STEPS - bus_in_upstream_place.move_up_step, 0)
-                                    # bus.react_left_step = bus.REACT_STEPS ~~~
-                                break
-                        else: # no berth can be overtoken-in
+            bus.react_left_step = 0 if bus_in_upstream_berth is None else max(bus.REACT_STEPS - bus_in_upstream_berth.move_up_step, 0)
+        else: # the bus in the upstream berth will be still
+            # check if can overtake into the berth
+            head_bus_can_move = False
+            if self._queue_rule in ['LO-In-Bus', 'FO-Bus', 'FO-Lane', 'LO-In-Lane']:
+                bus_in_upstream_place = self._place_buses_running[0]
+                if bus_in_upstream_place == None or bus_in_upstream_place.move_up_step > 0:
+                    for b in range(self._berth_num-1, 0, -1):
+                        can_ot_in = self._check_ot_in_berth_from_queue(b, bus)
+                        if can_ot_in == True:
+                            head_bus_can_move = True
                             bus.berth_target = None
-                            bus.lane_target = None
+                            bus.lane_target = 0
+                            bus.wish_berth = b
+                            self._remove_old_mark(bus)
+                            self._order_marks[b] = bus
+                            bus.is_moving_target_set = True
+                            if bus_in_upstream_place == None:
+                                bus.react_left_step = bus.REACT_STEPS
+                            else:
+                                bus.react_left_step = max(bus.REACT_STEPS - bus_in_upstream_place.move_up_step, 0)
+                            break
 
-                    else: # the upstream place is not available
-                        bus.berth_target = None
-                        bus.lane_target = None
-                    
-                    
-                else: # the rule is not allowed
-                    bus.lane_target = None
-                    bus.berth_target = None
+            if head_bus_can_move == False:
+                bus.lane_target = None
+                bus.berth_target = None
 
     def _update_lane_target(self, loc):
         # return ordered berth by the bus in the passing lane
@@ -465,9 +449,6 @@ class Stop(object):
         if bus.is_moving_target_set == True: return
         if bus.move_up_step != 0: return # only update the 'exactly' in the berth (or place)
         
-        # if bus.bus_id == 3:
-        #     print(loc, bus.wish_berth, self.current_time)
-
         if loc == self._berth_num-1:
             bus.lane_target = 'leaving'
             bus.berth_target = None
@@ -482,45 +463,26 @@ class Stop(object):
         else: # not served, for overtake-in only
             assert bus.wish_berth is not None, 'wish berth is none, otherwise not be passing lane without being served'
             # update the wish_berth if possible
-
             assert bus.wish_berth >= loc+1, 'overpass!'
-            if bus.wish_berth == loc+1:
+            if bus.wish_berth == loc+1: # next berth is the wish berth
+                can_move_to_berth = False
                 bus_in_next_berth = self._buses_in_berth[loc+1]
-                if self._pre_occupies[loc+1] is None:
-                    if bus_in_next_berth is None:
-                        # cross validation
-                        # i.e. check if the some bus is moving from berth towards lane
-                        if self._place_pre_occupies[loc+1] is None:
-                            self._remove_old_mark(bus)
-                            self._order_marks[loc+1] = bus
-                            bus.berth_target = loc+1
-                            bus.lane_target = None
-                            bus.react_left_step = 0
-                            bus.is_moving_target_set = True
-                        else:
-                            bus.lane_target = loc
-                            bus.berth_target = None
-                    else:
-                        if self._place_pre_occupies[loc+1] is None:
-                            if bus_in_next_berth.move_up_step > 0:
-                                # if bus.bus_id == 40:
-                                    # print(bus.bus_id, 'from lane to occupy time: ', self.current_time)
-                                self._remove_old_mark(bus)
-                                self._order_marks[loc+1] = bus
-                                bus.berth_target = loc+1
-                                bus.lane_target = None
-                                bus.react_left_step = max(bus.REACT_STEPS - bus_in_next_berth.move_up_step, 0)
-                                bus.is_moving_target_set = True
-                            else:
-                                bus.lane_target = loc
-                                bus.berth_target = None
-                        else:
-                            bus.lane_target = loc
-                            bus.berth_target = None
-
-                else: # one bus is heading to it, wait, cannot go further along the passing lane
+                if self._pre_occupies[loc+1] is None and self._place_pre_occupies[loc+1] is None: 
+                    # the second condition is for cross validation
+                    # i.e. check if the some bus is moving from berth towards lane
+                    if bus_in_next_berth is None or bus_in_next_berth.move_up_step > 0:
+                        can_move_to_berth = True
+                        bus.is_moving_target_set = True
+                        self._remove_old_mark(bus)
+                        self._order_marks[loc+1] = bus
+                        bus.berth_target = loc+1
+                        bus.lane_target = None
+                        bus.react_left_step = 0 if bus_in_next_berth is None else max(bus.REACT_STEPS - bus_in_next_berth.move_up_step, 0)
+                
+                if can_move_to_berth == False:
                     bus.lane_target = loc
                     bus.berth_target = None
+
             else: # still far-away the wish berth, to see if can go along the lane
                 self._check_target_and_set_l2l(loc)
                 bus.berth_target = None
@@ -541,46 +503,32 @@ class Stop(object):
             # not the most-downstream berth ...
             bus_running_next_berth = self._buses_in_berth[which_berth+1]
 
-            # first check if can FIFO out
-            if bus_running_next_berth == None: # the next berth is empty
-                if self._pre_occupies[which_berth+1] is None: # no bus heading to it
-                    is_set = self._check_grab_and_set_for_berth(which_berth)
-                    bus.react_left_step = 0 # if can move, no need to react
-                    if is_set: bus.is_moving_target_set = True
-                else: # one bus is heading to it
+            can_move_to_next_berth = False
+            can_move_to_next_place = False
+            if bus_running_next_berth == None or bus_running_next_berth.move_up_step > 0: # first check if can FIFO out
+                if self._pre_occupies[which_berth+1] is None and self._check_grab_and_set_for_berth(which_berth):
+                    can_move_to_next_berth = True
+                    bus.is_moving_target_set = True
+                    bus.react_left_step = 0 if bus_running_next_berth is None else max(bus.REACT_STEPS - bus_running_next_berth.move_up_step, 0)
+            else: # the bus is not moving, check the overtake-out rule
+                assert bus_running_next_berth.move_up_step == 0, 'wrong'
+                if self._pre_occupies[which_berth+1] is not None: raise SystemExit('Error: conflict-1')
+                # check the overtake-out rule
+                if self._queue_rule in ['LO-Out', 'FO-Bus', 'FO-Lane']:
+                    # check the insertion mark
+                    (order_place, return_reaction) = self._set_order_and_target_b2l(which_berth)
+                    if order_place is not None:
+                        can_move_to_next_berth = True
+                        bus.lane_target = order_place
+                        bus.berth_target = None
+                        bus.react_left_step = return_reaction
+                        bus.is_moving_target_set = True
+                        self._place_order_marks[order_place] = bus
+            
+            if can_move_to_next_berth == False and can_move_to_next_place == False:
                     bus.berth_target = which_berth
                     bus.lane_target = None
-
-            else: # the next berth is not empty
-                # if bus_running_next_berth.is_moving_target_set == False:
-                if bus_running_next_berth.move_up_step == 0: #the next bus in the berth is not moving
-                    if self._pre_occupies[which_berth+1] is not None: raise SystemExit('Error: conflict-1')
-                    # check the overtake-out rule
-                    if self._queue_rule in ['LO-Out', 'FO-Bus', 'FO-Lane']:
-                        # check the insertion mark
-                        (order_place, return_reaction) = self._set_order_and_target_b2l(which_berth)
-                        if order_place is not None:
-                            bus.lane_target = order_place
-                            bus.berth_target = None
-                            bus.react_left_step = return_reaction
-                            bus.is_moving_target_set = True
-                            self._place_order_marks[order_place] = bus
-                        else:
-                            bus.berth_target = which_berth
-                            bus.lane_target = None
-                    else: # cannot overtake-out
-                        bus.berth_target = which_berth
-                        bus.lane_target = None
-                else: # the next bus is moving
-                    if self._pre_occupies[which_berth+1] == None: # no bus heading to it
-                        is_set = self._check_grab_and_set_for_berth(which_berth)
-                        if is_set: 
-                            bus.is_moving_target_set = True
-                            bus.react_left_step = max(bus.REACT_STEPS - bus_running_next_berth.move_up_step, 0)
-                    else: # one bus is heading to it
-                        bus.berth_target = which_berth
-                        bus.lane_target = None
-
+        
         else: # the bus is not served
             # most-downstream berth ...
             if which_berth == (self._berth_num-1):
@@ -596,45 +544,17 @@ class Stop(object):
                 bus.lane_target = None
             else:
                 # 1. not advanced to the most-downstream vacant berth yet
-                # if bus.wish_berth == which_berth:
-                #     bus.berth_target = which_berth
-                #     bus.lane_target = None
-                #     return
-
                 # just check next berth
                 bus_running_next_berth = self._buses_in_berth[which_berth+1]
-
-                if bus_running_next_berth is None: # the next berth is empty
-                    if self._pre_occupies[which_berth+1] == None: # no bus heading to it
-                        is_set = self._check_grab_and_set_for_berth(which_berth)
-                        if is_set:
-                            bus.is_moving_target_set = True
-                            bus.react_left_step = 0
-
-                        # bus.berth_target = which_berth+1
-                        # bus.lane_target = None
-                        # self._remove_old_mark(bus)
-                        # self._order_marks[which_berth+1] = bus
-                        # bus.react_left_step = 0
-                        # bus.is_moving_target_set = True
-                    else: # one bus is heading to it, start to serve~
-                        bus.berth_target = which_berth
-                        bus.lane_target = None
-
-                else: # the next berth is not empty
-                    # if bus_running_next_berth.is_moving_target_set == False:
-                    if bus_running_next_berth.move_up_step == 0: # the next bus is still, start to serve~
-                        bus.berth_target = which_berth
-                        bus.lane_target = None
-                    else: # the next bus is moving
-                        if self._pre_occupies[which_berth+1] == None: # no bus heading to it
-                            is_set = self._check_grab_and_set_for_berth(which_berth)
-                            if is_set: 
-                                bus.is_moving_target_set = True
-                                bus.react_left_step = max(bus.REACT_STEPS - bus_running_next_berth.move_up_step, 0)
-                        else: # one bus is heading to the next berth, start to serve~
-                            bus.berth_target = which_berth
-                            bus.lane_target = None
+                can_move_to_next_berth = False
+                if bus_running_next_berth is None or bus_running_next_berth.move_up_step > 0:
+                    if self._pre_occupies[which_berth+1] == None and self._check_grab_and_set_for_berth(which_berth):
+                        can_move_to_next_berth = True
+                        bus.is_moving_target_set = True
+                        bus.react_left_step = 0 if bus_running_next_berth is None else max(bus.REACT_STEPS - bus_running_next_berth.move_up_step, 0)
+                if can_move_to_next_berth == False:
+                    bus.berth_target = which_berth
+                    bus.lane_target = None
 
             # 2. not in the assigned berth, future...
 
@@ -671,4 +591,3 @@ class Stop(object):
                         self._place_order_marks[loc+1] = bus
                 else: # one bus is heading to it
                     bus.lane_target = loc
-

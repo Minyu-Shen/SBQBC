@@ -15,18 +15,19 @@ class DistStop(Stop, DistDwell):
         Stop.bus_arrival(self, bus, t)
         # generate service time upon arrival in the entry queue
         bus.serv_time = self.get_random_serv_time(bus.route) # inherited from 'DistDwell'
+        bus.arr_mmt = t
 
     def _service_process(self, t):
         # update service time for each bus
         for berth_index, bus in enumerate(self._buses_serving):
             if bus == None: continue
             if bus.serv_time > 0:
-                if bus.service_start == None:
-                    bus.service_start = t
+                if bus.service_start_mmt == None:
+                    bus.service_start_mmt = t
                 bus.serv_time -= bus.SIM_DELTA 
                 if bus.serv_time <= 0.0:
-                    if bus.service_end == None:
-                        bus.service_end = t
+                    if bus.service_end_mmt == None:
+                        bus.service_end_mmt = t
                     if bus.service_berth == None:
                         bus.service_berth = berth_index
                     bus.is_served = True

@@ -22,8 +22,9 @@ class WaveQueue(object):
     
     def get_head_bus(self, curr_t):
         if curr_t - self._last_pop_time >= (WaveQueue.MOVE_UP_STEPS+WaveQueue.REACT_STEPS) * WaveQueue.SIM_DELTA:
-            
             return self._buses[0]
 
-    def advance_one_time_step(self):
-        pass
+    def accumulate_delay(self):
+        for bus in self._buses:
+            if bus.is_moving_target_set == False:
+                bus.enter_delay += WaveQueue.SIM_DELTA
