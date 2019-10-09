@@ -240,10 +240,14 @@ class Stop(object):
                         bus.is_moving_target_set = False
             else:
                 assert bus.berth_target == loc, 'must wanna stay in the berth'
-                if bus.is_served:
-                    pass # record the delay here
-                else:
-                    self._buses_serving[loc] = bus
+                if bus.is_served == False:
+                    if bus.assign_berth is None or bus.assign_berth == loc:
+                        self._buses_serving[loc] = bus
+
+                # if bus.is_served:
+                #     pass # record the delay here
+                # else:
+                #     self._buses_serving[loc] = bus
 
         else: # has lane target
             assert bus.lane_target == loc+1, 'if has lane target, must be the next place'
@@ -319,10 +323,13 @@ class Stop(object):
                     self.reset_bus_state(ordered_by_bus)
                     self._remove_old_mark(ordered_by_bus)
                 else:
-                    ordered_by_bus.wish_berth = which_berth
                     ordered_by_bus.is_moving_target_set = False
                     self._remove_old_mark(ordered_by_bus)
-                    self._order_marks[which_berth] = ordered_by_bus
+                    if ordered_by_bus.assign_berth is None:
+                        ordered_by_bus.wish_berth = which_berth # transfer old to her
+                        self._order_marks[which_berth] = ordered_by_bus
+                    else: # the assigned case
+                        ordered_by_bus.wish_berth = which_berth+1 # did not change her wish berth
                 return True
 
             else: # is ordered and cannot grab, stay still
@@ -420,15 +427,16 @@ class Stop(object):
                     for b in range(self._berth_num-1, 0, -1):
                         can_ot_in = self._check_ot_in_berth_from_queue(b, bus)
                         if can_ot_in == True:
-                            head_bus_can_move = True
-                            bus.berth_target = None
-                            bus.lane_target = 0
-                            bus.wish_berth = b
-                            self._remove_old_mark(bus)
-                            self._order_marks[b] = bus
-                            bus.is_moving_target_set = True
-                            bus.react_left_step = bus.REACT_STEPS if bus_in_upstream_place == None else max(bus.REACT_STEPS - bus_in_upstream_place.move_up_step, 0)
-                            break
+                            if bus.assign_berth is None or b == bus.assign_berth:
+                                head_bus_can_move = True
+                                bus.berth_target = None
+                                bus.lane_target = 0
+                                bus.wish_berth = b
+                                self._remove_old_mark(bus)
+                                self._order_marks[b] = bus
+                                bus.is_moving_target_set = True
+                                bus.react_left_step = bus.REACT_STEPS if bus_in_upstream_place == None else max(bus.REACT_STEPS - bus_in_upstream_place.move_up_step, 0)
+                                break
 
             if head_bus_can_move == False:
                 bus.lane_target = None
@@ -456,6 +464,8 @@ class Stop(object):
             assert bus.wish_berth is not None, 'wish berth is none, otherwise not be passing lane without being served'
             # update the wish_berth if possible
             assert bus.wish_berth >= loc+1, 'overpass!'
+            if bus.assign_berth is not None:
+                assert bus.wish_berth == bus.assign_berth, 'mush be equal'
             if bus.wish_berth == loc+1: # next berth is the wish berth
                 can_move_to_berth = False
                 bus_in_next_berth = self._buses_in_berth[loc+1]
@@ -530,23 +540,31 @@ class Stop(object):
 
             # not the most-downstream berth ...
             # already in the berth, three cases
-            # 0. bus is serving
+            # 1. bus is serving
             if bus in self._buses_serving:
                 bus.berth_target = which_berth
                 bus.lane_target = None
             else:
-                # 1. not advanced to the most-downstream vacant berth yet
-                # just check next berth
-                bus_running_next_berth = self._buses_in_berth[which_berth+1]
-                can_move_to_next_berth = False
-                if bus_running_next_berth is None or bus_running_next_berth.move_up_step > 0:
-                    if self._pre_occupies[which_berth+1] == None and self._check_grab_and_set_for_berth(which_berth):
-                        can_move_to_next_berth = True
-                        bus.is_moving_target_set = True
-                        bus.react_left_step = 0 if bus_running_next_berth is None else max(bus.REACT_STEPS - bus_running_next_berth.move_up_step, 0)
-                if can_move_to_next_berth == False:
+                # 2. not advanced to the most-downstream vacant berth yet
+                # 2.1 check if it is the assigned berth
+                if bus.assign_berth is None or bus.assign_berth > which_berth:
+                    # not the assigned case, or the assigned berth is still far-away
+                    # then check next berth
+                    bus_running_next_berth = self._buses_in_berth[which_berth+1]
+                    can_move_to_next_berth = False
+                    if bus_running_next_berth is None or bus_running_next_berth.move_up_step > 0:
+                        if self._pre_occupies[which_berth+1] == None and self._check_grab_and_set_for_berth(which_berth):
+                            can_move_to_next_berth = True
+                            bus.is_moving_target_set = True
+                            bus.react_left_step = 0 if bus_running_next_berth is None else max(bus.REACT_STEPS - bus_running_next_berth.move_up_step, 0)
+                    if can_move_to_next_berth == False:
+                        bus.berth_target = which_berth
+                        bus.lane_target = None
+                else: # the assigned case and assigned berth is the current berth
+                    assert bus.assign_berth == which_berth, 'overpass the assigned berth'
                     bus.berth_target = which_berth
                     bus.lane_target = None
+                    
 
             # 2. not in the assigned berth, future...
 

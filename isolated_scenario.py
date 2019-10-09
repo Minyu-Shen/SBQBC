@@ -58,7 +58,7 @@ def sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent
 
 def plot_time_space(berth_num, total_buses, duration, sim_delta, stop):
     jam_spacing = 10
-    colors = ['violet','g','b','y','k','w']
+    colors = ['r','g','b','y','k','w']
     count = 0
     sorted_list = sorted(total_buses, key=lambda x: x.bus_id, reverse=False)
     # plot the insertion mark
@@ -70,8 +70,7 @@ def plot_time_space(berth_num, total_buses, duration, sim_delta, stop):
     for bus in sorted_list:
         # print(bus.bus_id)
         j = count % 5
-        # if count == 0:
-            # j = 5
+        # j = bus.assign_berth
         lists = sorted(bus.trajectory_locations.items()) # sorted by key, return a list of tuples
         x, y = zip(*lists) # unpack a list of pairs into two tuples
         x_list = list(x)
@@ -98,20 +97,21 @@ if __name__ == "__main__":
     berth_num = 4
     # 'LO-Out','LO-In-Bus','FO-Bus','LO-In-Lane', 'FO-Lane'
     queue_rule = 'FO-Bus'
-    f = 160.0 # buses/hr
+    f = 120.0 # buses/hr
     mu_S = 25 # seconds
     c_S = 0.4
     c_H = 1 # arrival headway variation
-    persistent = False
-    assign_plan = {0:0, 1:1, 2:2, 3:3} # line -> berth
-    flows = {0: [40, 1.0], 1:[40, 1.0], 2:[40, 1.0], 3:[40, 1.0]} # [buses/hr, c.v.]
+    persistent = True
+    # assign_plan = {0:0, 1:1, 2:2, 3:3} # line -> berth
+    assign_plan = None
+    flows = {0: [f/4, 1.0], 1:[f/4, 1.0], 2:[f/4, 1.0], 3:[f/4, 1.0]} # [buses/hr, c.v.]
     # flows = {0: [160.0, 1.0]}
-    # services = {0: [25, 0.4], 1: [25, 0.4], 2: [25, 0.4], 3: [25, 0.4]}
+    services = {0: [mu_S, c_S], 1: [mu_S, c_S], 2: [mu_S, c_S], 3: [mu_S, c_S]}
 
     ######### for plotting time-space diagram ########
-    # sim_one_isolated_scenario(berth_num, queue_rule, f, mu_S, c_S, persistent)
+    # sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan)
 
-    ### plot settings
+    # ### plot settings
     line_styles = ['-', ':', '--', '-.', '-.']
     rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane', 'LO-In-Bus']
     rule2style = {rules[i]: line_styles[i] for i in range(len(rules))}
@@ -133,6 +133,7 @@ if __name__ == "__main__":
         for queue_rule in rules:
             capacities = []
             for c_S in c_Ss:
+                print(c_S)
                 services = {0: [mu_S, c_S]}
                 cpt = sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan)
                 capacities.append(cpt * 3600.0)
@@ -156,7 +157,7 @@ if __name__ == "__main__":
             delays = []
             for c_S in c_Ss:
                 services = {0: [mu_S, c_S], 1: [mu_S, c_S], 2: [mu_S, c_S], 3: [mu_S, c_S]}
-                print(services)
+                print(c_S)
                 delay = sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan)
                 delays.append(delay)
             rule_delays[queue_rule] = delays

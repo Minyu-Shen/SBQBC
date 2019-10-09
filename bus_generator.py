@@ -5,7 +5,7 @@ import random
 from dist_stop import DistStop
 
 np.random.seed(13)
-random.seed(15)
+random.seed(1) # 15
 
 class Generator(object):
     total_bus = 0
@@ -61,7 +61,10 @@ class Generator(object):
             for rt, schedule in self._schedules.items():
                 while schedule[0] <= t:
                     schedule.pop(0)
-                    bus = Bus(Generator.total_bus, rt, berth=self._assign_plan[rt])
+                    if self._assign_plan is None:
+                        bus = Bus(Generator.total_bus, rt, berth=None)
+                    else:
+                        bus = Bus(Generator.total_bus, rt, berth=self._assign_plan[rt])
                     Generator.total_bus += 1
                     dspting_buses.append(bus)
                     # always has a bus's arrival time greater than simulation duration, no need to break
@@ -73,6 +76,12 @@ class Generator(object):
             # dispatch one bus to the stop, if there is no entry queue there
             # persistent case means single-stop capacity scenario, route always = 0
             bus = Bus(Generator.total_bus, route=0)
+            if self._assign_plan is None:
+                bus = Bus(Generator.total_bus, route=0, berth=None)
+            else:
+                rt = random.randint(0,3)
+                bus = Bus(Generator.total_bus, route=rt, berth=self._assign_plan[rt])
+                        
             Generator.total_bus += 1
             return bus
 
