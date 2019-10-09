@@ -5,7 +5,7 @@ import random
 from dist_stop import DistStop
 
 np.random.seed(13)
-random.seed(1) # 15
+random.seed(3) # 15
 
 class Generator(object):
     total_bus = 0

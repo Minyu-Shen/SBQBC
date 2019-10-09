@@ -5,18 +5,23 @@ import numpy as np
 import hyper_parameters as paras
 from arena import set_x_y_draw
 import matplotlib.pyplot as plt
+import math
 
-def sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan=None, c_H=1.0):
+def sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan=None):
 
     ######## hyper-parameters ########
-    duration = 3600 * 15
+    eval_every = 3600 * 20
+    duration = eval_every * 100 # the number of epochs
+    check_no = 5
+    threshold = 0.5 # for convergence check
 
     ######## simulation ########
-    # bus_flows = {0: [160.0, 1.0]} # [x:buses/hr, y: c.v.]
     generator = Generator(flows, duration, assign_plan)
     stop = DistStop(0, berth_num, queue_rule, services) # [x:mean_dwell, y: c.v. of dwell]
     total_buses = []
-    for t in np.arange(0.0, duration, paras.sim_delta):
+    mean_seq = []
+    for epoch in range(0, duration, 1):
+        t = epoch * paras.sim_delta
         ##### from downstream to upstream #####
         ### operation at the stop ...
         stop.process(t)
@@ -24,7 +29,6 @@ def sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent
         ### dispatch process ...
         if persistent:
             # the capacity case, keep the entry queue length == berth_num
-            # print(stop.get_entry_queue_length())
             while stop.get_entry_queue_length() < berth_num:
                 bus = generator.dispatch(t, persistent=True)
                 total_buses.append(bus)
@@ -36,24 +40,38 @@ def sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent
             for bus in dispatched_buses:
                 total_buses.append(bus)
                 stop.bus_arrival(bus, t)
-    
+
+        ### evaluate the convergence
+        if epoch % eval_every == 0 and epoch != 0:
+            if persistent:
+                mean_seq.append(stop.exit_counting / (t*1.0) * 3600)
+            else:
+                mean_seq.append(calculate_avg_delay(total_buses))
+                # print(mean_seq)
+            if len(mean_seq) >= check_no: # at least
+                mean_seq_std = calculate_list_std(mean_seq[-check_no:])
+                if mean_seq_std < threshold: return mean_seq[-1]
+
     if duration < 1800:
         plot_time_space(berth_num, total_buses, duration, paras.sim_delta, stop)
-        pass
-    # calculate discharing flow and return
-    if persistent:
-        return stop.exit_counting / (duration*1.0)
-    else:
-        # calculate delays
-        bus_count = 0
-        bus_delay_count = 0.0
-        for bus in total_buses:
-            if bus.dpt_stop_mmt is not None: # only count the buses that have left the stop
-                # bus_delay_count += bus.dpt_stop_mmt - bus.arr_mmt - (bus.service_end_mmt - bus.service_start_mmt)
-                bus_delay_count += bus.enter_delay
-                bus_delay_count += bus.exit_delay
-                bus_count += 1
-        return bus_delay_count / bus_count*1.0
+
+
+def calculate_list_std(data_list):
+    mean = sum(data_list) / len(data_list)
+    std = math.sqrt(sum([(xi - mean)**2 for xi in data_list]) / (len(data_list) -1))
+    return std
+
+def calculate_avg_delay(total_buses):
+    # calculate delays
+    bus_count = 0
+    bus_delay_count = 0.0
+    for bus in total_buses:
+        if bus.dpt_stop_mmt is not None: # only count the buses that have left the stop
+            # bus_delay_count += bus.dpt_stop_mmt - bus.arr_mmt - (bus.service_end_mmt - bus.service_start_mmt)
+            bus_delay_count += bus.enter_delay
+            bus_delay_count += bus.exit_delay
+            bus_count += 1
+    return bus_delay_count / bus_count*1.0
 
 
 def plot_time_space(berth_num, total_buses, duration, sim_delta, stop):
@@ -97,80 +115,83 @@ if __name__ == "__main__":
     berth_num = 4
     # 'LO-Out','LO-In-Bus','FO-Bus','LO-In-Lane', 'FO-Lane'
     queue_rule = 'FO-Bus'
-    f = 120.0 # buses/hr
-    mu_S = 25 # seconds
-    c_S = 0.4
-    c_H = 1 # arrival headway variation
-    persistent = True
-    # assign_plan = {0:0, 1:1, 2:2, 3:3} # line -> berth
-    assign_plan = None
-    flows = {0: [f/4, 1.0], 1:[f/4, 1.0], 2:[f/4, 1.0], 3:[f/4, 1.0]} # [buses/hr, c.v.]
-    # flows = {0: [160.0, 1.0]}
-    services = {0: [mu_S, c_S], 1: [mu_S, c_S], 2: [mu_S, c_S], 3: [mu_S, c_S]}
+    # queue_rule = 'FIFO'
+    for f in range(150,190,10):
+        # f = 140.0 # buses/hr
+        mu_S = 25 # seconds
+        c_S = 0.4
+        c_H = 1 # arrival headway variation
+        persistent = False
+        assign_plan = {0:0, 1:1, 2:2, 3:3} # line -> berth
+        # assign_plan = None
+        flows = {0: [f/4, 1.0], 1:[f/4, 1.0], 2:[f/4, 1.0], 3:[f/4, 1.0]} # [buses/hr, c.v.]
+        # flows = {0: [160.0, 1.0]}
+        services = {0: [mu_S, c_S], 1: [mu_S, c_S], 2: [mu_S, c_S], 3: [mu_S, c_S]}
 
-    ######### for plotting time-space diagram ########
-    # sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan)
+        ######### for plotting time-space diagram ########
+        res = sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan)
+        print(f, res)
 
     # ### plot settings
-    line_styles = ['-', ':', '--', '-.', '-.']
-    rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane', 'LO-In-Bus']
-    rule2style = {rules[i]: line_styles[i] for i in range(len(rules))}
+    # line_styles = ['-', ':', '--', '-.', '-.']
+    # rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane', 'LO-In-Bus']
+    # rule2style = {rules[i]: line_styles[i] for i in range(len(rules))}
 
-    ######### for desire ########
-    # rules = ['FIFO', 'LO-Out']
-    # rules = ['FO-Bus']
-    # rules = ['FO-Bus', 'FO-Lane']
-    # rules = ['FO-Lane']
-    # rules = ['LO-Out', 'FO-Bus']
-    # rules = ['FIFO', 'LO-Out', 'FO-Bus']
-    rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane']
-    # rules = ['FIFO', 'LO-Out', 'FO-Lane']
-    # rules = ['LO-Out', 'FO-Bus', 'FO-Lane']
+    # ######### for desire ########
+    # # rules = ['FIFO', 'LO-Out']
+    # # rules = ['FO-Bus']
+    # # rules = ['FO-Bus', 'FO-Lane']
+    # # rules = ['FO-Lane']
+    # # rules = ['LO-Out', 'FO-Bus']
+    # # rules = ['FIFO', 'LO-Out', 'FO-Bus']
+    # rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane']
+    # # rules = ['FIFO', 'LO-Out', 'FO-Lane']
+    # # rules = ['LO-Out', 'FO-Bus', 'FO-Lane']
 
-    if persistent:
-        c_Ss = [0.1*x for x in range(11)]
-        rule_capacities = {}
-        for queue_rule in rules:
-            capacities = []
-            for c_S in c_Ss:
-                print(c_S)
-                services = {0: [mu_S, c_S]}
-                cpt = sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan)
-                capacities.append(cpt * 3600.0)
-            rule_capacities[queue_rule] = capacities
-        print(rule_capacities)
+    # if persistent:
+    #     c_Ss = [0.1*x for x in range(11)]
+    #     rule_capacities = {}
+    #     for queue_rule in rules:
+    #         capacities = []
+    #         for c_S in c_Ss:
+    #             print(c_S)
+    #             services = {0: [mu_S, c_S]}
+    #             cpt = sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan)
+    #             capacities.append(cpt * 3600.0)
+    #         rule_capacities[queue_rule] = capacities
+    #     print(rule_capacities)
 
-        # plotting ...
-        plt, ax = set_x_y_draw('C_S', 'buses/hr')
-        for rule, capacities in rule_capacities.items():
-            if rule == 'FO-Lane':
-                plt.plot(c_Ss, capacities, 'r', linestyle=rule2style[rule], linewidth=2)
-            else:
-                plt.plot(c_Ss, capacities, 'k', linestyle=rule2style[rule], linewidth=2)
-        # ax.legend([r'FIFO', r'LO-Out', r'FO-Bus', r'FO-Lane'],\
-            # handlelength=3, fontsize=13)
-        plt.show()
-    else:
-        c_Ss = [0.1*x for x in range(11)]
-        rule_delays = {}
-        for queue_rule in rules:
-            delays = []
-            for c_S in c_Ss:
-                services = {0: [mu_S, c_S], 1: [mu_S, c_S], 2: [mu_S, c_S], 3: [mu_S, c_S]}
-                print(c_S)
-                delay = sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan)
-                delays.append(delay)
-            rule_delays[queue_rule] = delays
-        print(rule_delays)
+    #     # plotting ...
+    #     plt, ax = set_x_y_draw('C_S', 'buses/hr')
+    #     for rule, capacities in rule_capacities.items():
+    #         if rule == 'FO-Lane':
+    #             plt.plot(c_Ss, capacities, 'r', linestyle=rule2style[rule], linewidth=2)
+    #         else:
+    #             plt.plot(c_Ss, capacities, 'k', linestyle=rule2style[rule], linewidth=2)
+    #     # ax.legend([r'FIFO', r'LO-Out', r'FO-Bus', r'FO-Lane'],\
+    #         # handlelength=3, fontsize=13)
+    #     plt.show()
+    # else:
+    #     c_Ss = [0.1*x for x in range(11)]
+    #     rule_delays = {}
+    #     for queue_rule in rules:
+    #         delays = []
+    #         for c_S in c_Ss:
+    #             services = {0: [mu_S, c_S], 1: [mu_S, c_S], 2: [mu_S, c_S], 3: [mu_S, c_S]}
+    #             print(c_S)
+    #             delay = sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan)
+    #             delays.append(delay)
+    #         rule_delays[queue_rule] = delays
+    #     print(rule_delays)
 
-        # plotting ...
-        plt, ax = set_x_y_draw('C_S', 'delay (secs)')
-        for rule, delays in rule_delays.items():
-            if rule == 'FO-Lane':
-                plt.plot(c_Ss, delays, 'r', linestyle=rule2style[rule], linewidth=2)
-            else:
-                plt.plot(c_Ss, delays, 'k', linestyle=rule2style[rule], linewidth=2)
+    #     # plotting ...
+    #     plt, ax = set_x_y_draw('C_S', 'delay (secs)')
+    #     for rule, delays in rule_delays.items():
+    #         if rule == 'FO-Lane':
+    #             plt.plot(c_Ss, delays, 'r', linestyle=rule2style[rule], linewidth=2)
+    #         else:
+    #             plt.plot(c_Ss, delays, 'k', linestyle=rule2style[rule], linewidth=2)
 
-        ax.legend(rules, handlelength=3, fontsize=13)
+    #     ax.legend(rules, handlelength=3, fontsize=13)
 
-        plt.show()
+    #     plt.show()
