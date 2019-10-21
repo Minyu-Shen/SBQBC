@@ -1,13 +1,13 @@
 from bus_generator import Generator
 from dist_stop import DistStop
-from intersection import Signal
-import numpy as np
+from signal import Signal, Buffer
+# from queue import Buffer
 import hyper_parameters as paras
 from arena import set_x_y_draw
 import matplotlib.pyplot as plt
 from arena import calculate_avg_delay, calculate_list_std
 
-def sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan=None):
+def sim_one_NS_scenario(berth_num, queue_rule, flows, services, persistent, buffer_size, cycle_length, green_ratio, assign_plan=None):
 
     ######## hyper-parameters ########
     eval_every = 3600 * 5
@@ -17,10 +17,12 @@ def sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent
 
     ######## simulation ########
     generator = Generator(flows, duration, assign_plan)
-    stop = DistStop(0, berth_num, queue_rule, services) # [x:mean_dwell, y: c.v. of dwell]
+    signal = Signal(cycle_length, green_ratio)
+    buffer = Buffer(buffer_size)
+    stop = DistStop(0, berth_num, queue_rule, services, buffer) # [x:mean_dwell, y: c.v. of dwell]
     total_buses = []
     mean_seq = []
-    duration = int(3600 * 0.1)
+    duration = int(3600 * 0.09)
     for epoch in range(0, duration, 1):
         t = epoch * paras.sim_delta
         ##### from downstream to upstream #####
@@ -98,6 +100,10 @@ def plot_time_space(berth_num, total_buses, duration, sim_delta, stop):
 
 if __name__ == "__main__":
     ######### parameters ########
+    cycle_length = 120
+    green_ratio = 0.5
+    buffer_size = 5
+
     berth_num = 4
     # 'LO-Out','LO-In-Bus','FO-Bus','LO-In-Lane', 'FO-Lane'
     queue_rule = 'FO-Bus'
@@ -115,7 +121,7 @@ if __name__ == "__main__":
     services = {0: [mu_S, c_S], 1: [mu_S, c_S], 2: [mu_S, c_S], 3: [mu_S, c_S]}
 
     ######### for plotting time-space diagram ########
-    res = sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan)
+    res = sim_one_NS_scenario(berth_num, queue_rule, flows, services, persistent, buffer_size, cycle_length, green_ratio, assign_plan)
 
     # ### plot settings
     # line_styles = ['-', ':', '--', '-.', '-.']

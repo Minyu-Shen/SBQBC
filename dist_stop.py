@@ -5,8 +5,8 @@ from collections import defaultdict
 # 'process' for methods for sub-stop
 # 'operation' for methods in parent-stop
 class DistStop(Stop, DistDwell):
-    def __init__(self, stop_id, berth_num, queue_rule, route_dists, down_signal=None):
-        Stop.__init__(self, stop_id, berth_num, queue_rule, down_signal=down_signal)
+    def __init__(self, stop_id, berth_num, queue_rule, route_dists, down_buffer=None):
+        Stop.__init__(self, stop_id, berth_num, queue_rule, down_buffer=down_buffer)
         DistDwell.__init__(self, route_dists)
         self.berth_state = defaultdict(list)
 

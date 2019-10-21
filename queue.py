@@ -28,3 +28,6 @@ class WaveQueue(object):
         for bus in self._buses:
             if bus.is_moving_target_set == False:
                 bus.enter_delay += WaveQueue.SIM_DELTA
+
+
+        

@@ -8,11 +8,11 @@ class Stop(object):
     MOVE_UP_STEPS = paras.move_up_steps
     REACT_STEPS = paras.reaction_steps
 
-    def __init__(self, stop_id, berth_num, queue_rule, down_signal=None):
+    def __init__(self, stop_id, berth_num, queue_rule, down_buffer=None):
         self._stop_id = stop_id
         self._berth_num = berth_num
         self._queue_rule = queue_rule
-        self._downstream_signal = down_signal
+        self._downstream_buffer = down_buffer
 
         # running states for berths
         self._entry_queue = WaveQueue()
@@ -132,8 +132,6 @@ class Stop(object):
             #     bus.move_up_step += 1
             # if bus.move_up_step == bus.MOVE_UP_STEPS:
 
-            # for now, just leave, in future, add signal
-            assert self._downstream_signal == None
             self._lane_discharge_to_buffer()
         else:
             # not the most-downstream space ...
@@ -450,9 +448,11 @@ class Stop(object):
         if bus.move_up_step != 0: return # only update the 'exactly' in the berth (or place)
         
         if loc == self._berth_num-1:
-            bus.lane_target = 'leaving'
-            bus.berth_target = None
-            bus.is_moving_target_set = True
+            if self._downstream_buffer.is_buffer_already():
+                bus.lane_target = 'leaving'
+                bus.berth_target = None
+                bus.is_moving_target_set = True
+                self._downstream_buffer.set_occupation(bus)
             return
         # not the most-downstream space ...
         if bus.is_served: # for overtake-out
@@ -498,13 +498,15 @@ class Stop(object):
         if bus.is_served:
             # most-downstream berth ...
             if which_berth == (self._berth_num-1): # most downstream berth, directly leave
-                bus.berth_target = 'leaving'
-                bus.lane_target = None
-                bus.is_moving_target_set = True
+                if self._downstream_buffer.is_buffer_already():
+                    bus.berth_target = 'leaving'
+                    bus.lane_target = None
+                    bus.is_moving_target_set = True
+                    self._downstream_buffer.set_occupation(bus)
                 return
+
             # not the most-downstream berth ...
             bus_running_next_berth = self._buses_in_berth[which_berth+1]
-
             can_move_to_next_berth = False
             can_move_to_next_place = False
             if bus_running_next_berth == None or bus_running_next_berth.move_up_step > 0: # first check if can FIFO out
