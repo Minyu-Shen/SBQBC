@@ -17,15 +17,17 @@ def sim_one_NS_scenario(berth_num, queue_rule, flows, services, persistent, buff
 
     ######## simulation ########
     generator = Generator(flows, duration, assign_plan)
-    signal = Signal(cycle_length, green_ratio)
-    buffer = Buffer(buffer_size)
-    stop = DistStop(0, berth_num, queue_rule, services, buffer) # [x:mean_dwell, y: c.v. of dwell]
+    down_signal = Signal(cycle_length, green_ratio)
+    down_buffer = Buffer(buffer_size, down_signal)
+    stop = DistStop(0, berth_num, queue_rule, services, down_buffer, None) # [x:mean_dwell, y: c.v. of dwell]
     total_buses = []
     mean_seq = []
-    duration = int(3600 * 0.09)
+    duration = int(3600 * 0.2)
     for epoch in range(0, duration, 1):
         t = epoch * paras.sim_delta
         ##### from downstream to upstream #####
+        ### operation in the buffer
+
         ### operation at the stop ...
         stop.process(t)
 
@@ -57,13 +59,12 @@ def sim_one_NS_scenario(berth_num, queue_rule, flows, services, persistent, buff
         
 
     if duration < 1800:
-        plot_time_space(berth_num, total_buses, duration, paras.sim_delta, stop)
+        plot_NS_time_space(berth_num, total_buses, duration, paras.sim_delta, stop, down_buffer, down_signal)
 
     return mean_seq[-1]
 
 
-def plot_time_space(berth_num, total_buses, duration, sim_delta, stop):
-    jam_spacing = 10
+def plot_NS_time_space(berth_num, total_buses, duration, sim_delta, stop, down_buffer, down_signal):
     colors = ['r','g','b','y','k','w']
     count = 0
     sorted_list = sorted(total_buses, key=lambda x: x.bus_id, reverse=False)
@@ -73,8 +74,8 @@ def plot_time_space(berth_num, total_buses, duration, sim_delta, stop):
             if times[i] == True or times[i+1] == True:
                 plt.hlines(berth+1, i*sim_delta, (i+1)*sim_delta, 'r', linewidth=8)
 
+    # print(len(sorted_list))
     for bus in sorted_list:
-        # print(bus.bus_id)
         j = count % 5
         # j = bus.assign_berth
         lists = sorted(bus.trajectory_locations.items()) # sorted by key, return a list of tuples
@@ -94,20 +95,34 @@ def plot_time_space(berth_num, total_buses, duration, sim_delta, stop):
         # plot the service time
         if bus.service_berth is not None:
             plt.hlines((bus.service_berth+1), bus.service_start_mmt, bus.service_end_mmt, 'gray', linewidth=5)
+        
         count += 1
+
+    # plot signal
+    C = down_signal._cycle_length
+    G = down_signal._green_ratio * C
+    R = C-G
+    for i in range(int(duration) // C):
+        # plot green period
+        plt.hlines(berth_num+1+down_buffer.buffer_size, i*C, i*C+G, linewidth=2.5, colors='g')
+        # plot red period
+        plt.hlines(berth_num+1+down_buffer.buffer_size, i*C+G, (i+1)*C, linewidth=2.5, colors='r')
+
+    # plot buffer
+
     plt.show()
 
 
 if __name__ == "__main__":
     ######### parameters ########
-    cycle_length = 120
-    green_ratio = 0.5
-    buffer_size = 5
+    cycle_length = 140
+    green_ratio = 0.4
+    buffer_size = 2
 
     berth_num = 4
     # 'LO-Out','LO-In-Bus','FO-Bus','LO-In-Lane', 'FO-Lane'
-    queue_rule = 'FO-Bus'
-    # queue_rule = 'FIFO'
+    # queue_rule = 'FO-Bus'
+    queue_rule = 'FIFO'
     mu_S = 25 # seconds
     c_S = 0.4
     c_H = 1 # arrival headway variation
@@ -123,14 +138,15 @@ if __name__ == "__main__":
     ######### for plotting time-space diagram ########
     res = sim_one_NS_scenario(berth_num, queue_rule, flows, services, persistent, buffer_size, cycle_length, green_ratio, assign_plan)
 
-    # ### plot settings
+    ### plot settings
     # line_styles = ['-', ':', '--', '-.', '-.']
     # rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane', 'LO-In-Bus']
     # rule2style = {rules[i]: line_styles[i] for i in range(len(rules))}
 
-    # ######### for desire ########
+    ######### for desire ########
     # # rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane']
-    # # rules = ['FIFO', 'LO-Out']
+    # # rules = ['FIFO', 'LO-Out', 'FO-Bus']
+    # # rules = ['FIFO']
 
     # if persistent:
     #     c_Ss = [0.1*x for x in range(11)]
@@ -140,7 +156,7 @@ if __name__ == "__main__":
     #         for c_S in c_Ss:
     #             print(c_S)
     #             services = {0: [mu_S, c_S]}
-    #             cpt = sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan)
+    #             cpt = sim_one_NS_scenario(berth_num, queue_rule, flows, services, persistent, buffer_size, cycle_length, green_ratio, assign_plan)
     #             capacities.append(cpt)
     #         rule_capacities[queue_rule] = capacities
     #     print(rule_capacities)
@@ -163,7 +179,7 @@ if __name__ == "__main__":
     #         for c_S in c_Ss:
     #             services = {0: [mu_S, c_S], 1: [mu_S, c_S], 2: [mu_S, c_S], 3: [mu_S, c_S]}
     #             print(c_S)
-    #             delay = sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan)
+    #             delay = sim_one_NS_scenario(berth_num, queue_rule, flows, services, persistent, buffer_size, cycle_length, green_ratio, assign_plan)
     #             delays.append(delay)
     #         rule_delays[queue_rule] = delays
     #     print(rule_delays)

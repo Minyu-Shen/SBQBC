@@ -12,11 +12,15 @@ class A(object):
         self.mylist[0] = None
         return '1', one
 
-def test_method():
-    pass
+def test_method(to_be_modified):
+    to_be_modified.property = 100
 
 if __name__ == "__main__":
 
+    a = A(10)
+    print(a.property)
+    test_method(a)
+    print(a.property)
     # a = []
     # a.append(A(5))
     # a.append(A(10))
@@ -24,12 +28,12 @@ if __name__ == "__main__":
     # s.property = 100000
     # print(a[0].property )
 
-    a = A(10)
-    b = A(20)
-    list1 = [a, b]
-    list2 = [a, b]
-    list1[0].property = 50
-    print(list2[0].property)
+    # a = A(10)
+    # b = A(20)
+    # list1 = [a, b]
+    # list2 = [a, b]
+    # list1[0].property = 50
+    # print(list2[0].property)
     # print(list1[0].property)
     # list2[0].property = 1000
     # print(list1[0].property)

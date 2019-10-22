@@ -5,8 +5,8 @@ from collections import defaultdict
 # 'process' for methods for sub-stop
 # 'operation' for methods in parent-stop
 class DistStop(Stop, DistDwell):
-    def __init__(self, stop_id, berth_num, queue_rule, route_dists, down_buffer=None):
-        Stop.__init__(self, stop_id, berth_num, queue_rule, down_buffer=down_buffer)
+    def __init__(self, stop_id, berth_num, queue_rule, route_dists, down_buffer, up_buffer):
+        Stop.__init__(self, stop_id, berth_num, queue_rule, down_buffer, up_buffer)
         DistDwell.__init__(self, route_dists)
         self.berth_state = defaultdict(list)
 
@@ -36,7 +36,9 @@ class DistStop(Stop, DistDwell):
 
     def process(self, t):
         self.current_time = t
-        self.update_time_space(t)
+
+        ### -1. update the buffer state
+        self._downstream_buffer.discharge(t)
 
         ### 0. update the target berth and target place
         self._update_targets(t)
@@ -54,10 +56,14 @@ class DistStop(Stop, DistDwell):
 
         ### 3. stop (berths) service operations
         self._service_process(t)
-        self._entry_queue_operation(t)
+        # self._entry_queue.operation(t, self)
+
+        self._entry_operation(t)
 
         ### 4. accumulate delays
         self._accumulate_delays()
+
+        self.update_time_space(t)
 
     def _accumulate_delays(self):
         # 1. update enter delay in the queue

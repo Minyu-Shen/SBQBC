@@ -10,7 +10,7 @@ class Signal(object):
             return True
         else:
             return False
-    
+
     # def get_buffer_size(self):
     #     return self._buffer_size
 
@@ -28,15 +28,84 @@ class Signal(object):
     #         self._queue = []
 
 class Buffer(object):
-    def __init__(self, buffer_size):
-        self._buffer_size = buffer_size
+    def __init__(self, buffer_size, down_signal):
+        self.buffer_size = buffer_size
         self._buses_in_buffer= [None] * buffer_size # 0 is the most downstream
+        self.last_ordered = False
+        self.down_signal = down_signal
 
-    def is_buffer_already(self):
-        if self._buses_in_buffer[0] is None or self._buses_in_buffer[0].move_up_step > 0:
-            return True
+    def update_time_space_info(self, current_time, berth_num):
+        for buffer_id in range(self.buffer_size):
+            bus = self._buses_in_buffer[buffer_id]
+            if bus is None: continue
+            bus.trajectory_locations[current_time] = berth_num + buffer_id + 1
+
+    def check_last_buffer(self):
+        if self._buses_in_buffer[0] is None:
+            return (self.last_ordered, None)
         else:
-            return False
+            return (self.last_ordered, self._buses_in_buffer[0].move_up_step)
 
     def set_occupation(self, bus):
-        self._buses_in_buffer[0] = None
+        bus.move_up_step = 0
+        bus.is_moving_target_set = False
+        self._buses_in_buffer[0] = bus
+        self.last_ordered = False
+
+    def discharge(self, curr_t):
+        if self.buffer_size > 0:
+            for loc in range(self.buffer_size-1,-1,-1):
+                self._set_target(loc, curr_t)
+                self._move_up_operation(loc, curr_t)
+
+    def _move_up_operation(self, loc, curr_t):
+        # for loc in range(self.buffer_size-1,-1,-1):
+        bus = self._buses_in_buffer[loc]
+        if bus is None: return
+        if bus.is_moving_target_set == False: return
+
+        if bus.react_left_step > 0:
+            bus.react_left_step -= 1
+        else:
+            if bus.bus_id == 6:
+                print('bus moving', bus.move_up_step, loc, curr_t, self._buses_in_buffer)
+            bus.move_up_step += 1
+            if bus.move_up_step == bus.MOVE_UP_STEPS:
+                if bus.bus_id == 6:
+                    print('bus moved')
+                self.forward(loc)
+
+    def _set_target(self, loc, curr_t):
+        # for loc in range(self.buffer_size-1,-1,-1):
+        bus = self._buses_in_buffer[loc]
+        if bus is None: return
+        if bus.is_moving_target_set == True: return
+        
+        if self._buses_in_buffer[loc].bus_id == 6:
+            print('setting target...', loc, curr_t)
+
+        if loc == self.buffer_size-1:
+            if self.down_signal.is_green(curr_t):
+                bus.react_left_step = 0
+                bus.is_moving_target_set = True
+        else:
+            next_bus = self._buses_in_buffer[loc+1]
+            if next_bus is None or next_bus.move_up_step > 0:
+                bus.is_moving_target_set = True
+                if next_bus is not None:
+                    bus.react_left_step = max(bus.REACT_STEPS - next_bus.move_up_step, 0)
+                else:
+                    bus.react_left_step = 0
+
+    def forward(self, loc):
+        if loc == self.buffer_size-1:
+            if self._buses_in_buffer[loc].bus_id == 6:
+                print('leaving...')
+            self._buses_in_buffer[loc] = None
+        else:
+            self._buses_in_buffer[loc+1] = self._buses_in_buffer[loc]
+            self._buses_in_buffer[loc+1].is_moving_target_set = False
+            self._buses_in_buffer[loc+1].move_up_step = 0
+            self._buses_in_buffer[loc] = None
+        
+

@@ -1,4 +1,5 @@
 import hyper_parameters as paras
+# from arena import enter_target_update, enter_operation
 
 class WaveQueue(object):
     # board_rate = 0.25 # pax/sec
@@ -28,6 +29,3 @@ class WaveQueue(object):
         for bus in self._buses:
             if bus.is_moving_target_set == False:
                 bus.enter_delay += WaveQueue.SIM_DELTA
-
-
-        
