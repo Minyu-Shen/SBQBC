@@ -67,12 +67,8 @@ class Buffer(object):
         if bus.react_left_step > 0:
             bus.react_left_step -= 1
         else:
-            if bus.bus_id == 6:
-                print('bus moving', bus.move_up_step, loc, curr_t, self._buses_in_buffer)
             bus.move_up_step += 1
             if bus.move_up_step == bus.MOVE_UP_STEPS:
-                if bus.bus_id == 6:
-                    print('bus moved')
                 self.forward(loc)
 
     def _set_target(self, loc, curr_t):
@@ -81,9 +77,6 @@ class Buffer(object):
         if bus is None: return
         if bus.is_moving_target_set == True: return
         
-        if self._buses_in_buffer[loc].bus_id == 6:
-            print('setting target...', loc, curr_t)
-
         if loc == self.buffer_size-1:
             if self.down_signal.is_green(curr_t):
                 bus.react_left_step = 0
@@ -99,8 +92,6 @@ class Buffer(object):
 
     def forward(self, loc):
         if loc == self.buffer_size-1:
-            if self._buses_in_buffer[loc].bus_id == 6:
-                print('leaving...')
             self._buses_in_buffer[loc] = None
         else:
             self._buses_in_buffer[loc+1] = self._buses_in_buffer[loc]

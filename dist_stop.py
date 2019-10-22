@@ -38,7 +38,7 @@ class DistStop(Stop, DistDwell):
         self.current_time = t
 
         ### -1. update the buffer state
-        self._downstream_buffer.discharge(t)
+        if self._downstream_buffer is not None: self._downstream_buffer.discharge(t)
 
         ### 0. update the target berth and target place
         self._update_targets(t)
