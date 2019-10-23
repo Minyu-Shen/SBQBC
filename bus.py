@@ -45,5 +45,6 @@ class Bus(object):
         self.trajectory_locations = defaultdict(float)
         
         self.service_berth = None
-    # def record_trajectory(self, curr_t):
-    #     pass
+
+    def react_move_operation(self):
+        pass

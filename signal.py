@@ -11,28 +11,15 @@ class Signal(object):
         else:
             return False
 
-    # def get_buffer_size(self):
-    #     return self._buffer_size
-
-    # def enter_bus(self, bus):
-    #     self._queue.append(bus)
-
-    # def is_queue_full(self):
-    #     if len(self._queue) < self._buffer_size:
-    #         return False
-    #     else:
-    #         return True
-    
-    # def discharge(self, curr_t):
-    #     if self.is_green(curr_t):
-    #         self._queue = []
 
 class Buffer(object):
     def __init__(self, buffer_size, down_signal):
         self.buffer_size = buffer_size
         self._buses_in_buffer= [None] * buffer_size # 0 is the most downstream
-        self.last_ordered = False
+        self.is_invading = False
         self.down_signal = down_signal
+        self._book_no = 0
+        
 
     def update_time_space_info(self, current_time, berth_num):
         for buffer_id in range(self.buffer_size):
@@ -40,20 +27,36 @@ class Buffer(object):
             if bus is None: continue
             bus.trajectory_locations[current_time] = berth_num + buffer_id + 1
 
-    def check_last_buffer(self):
-        if self._buses_in_buffer[0] is None:
-            return (self.last_ordered, None)
+    def check_if_can_in(self):
+        # if self.is_invading:
+        #     return False
+        # else:
+        curr_no = sum(1 for bus in self._buses_in_buffer if bus != None)
+        assert self._book_no + curr_no <= self.buffer_size, 'no greater than the buffer size'
+        
+        if self._book_no + curr_no == self.buffer_size: # is full
+            return False
         else:
-            return (self.last_ordered, self._buses_in_buffer[0].move_up_step)
+            self._book_no += 1
+            return True
+
+    def check_final_buffer(self):
+        if self._buses_in_buffer[0] is None:
+            return None
+        else:
+            # assert self._buses_in_buffer[0].move_up_step != 0, 'the bus in the buffer cannot be still'
+            return self._buses_in_buffer[0].move_up_step
 
     def set_occupation(self, bus):
         bus.move_up_step = 0
         bus.is_moving_target_set = False
         self._buses_in_buffer[0] = bus
-        self.last_ordered = False
+        self._book_no -= 1
+        self.is_invading = False
 
     def discharge(self, curr_t):
         if self.buffer_size > 0:
+            # printed_bus_ids = [b.bus_id if b is not None else None for b in self._buses_in_buffer ]
             for loc in range(self.buffer_size-1,-1,-1):
                 self._set_target(loc, curr_t)
                 self._move_up_operation(loc, curr_t)
@@ -67,8 +70,10 @@ class Buffer(object):
         if bus.react_left_step > 0:
             bus.react_left_step -= 1
         else:
-            bus.move_up_step += 1
-            if bus.move_up_step == bus.MOVE_UP_STEPS:
+            if bus.move_up_step < bus.MOVE_UP_STEPS:
+                bus.move_up_step += 1
+            else:
+                assert bus.move_up_step == bus.MOVE_UP_STEPS, 'must be equal'
                 self.forward(loc)
 
     def _set_target(self, loc, curr_t):

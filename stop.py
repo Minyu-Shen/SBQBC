@@ -347,16 +347,20 @@ class Stop(object):
                         bus.lane_target = None
                         bus.berth_target = None
                 else:
-                    is_ordered, returned_step = self._downstream_buffer.check_last_buffer()
-                    if is_ordered or returned_step == 0:
+                    if self._downstream_buffer.is_invading == False:
+                        returned_step = self._downstream_buffer.check_final_buffer()
+                        if returned_step == 0:
+                            bus.lane_target = None
+                            bus.berth_target = None
+                        else:
+                            self._downstream_buffer.is_invading = True
+                            bus.lane_target = 'leaving'
+                            bus.berth_target = None
+                            bus.is_moving_target_set = True
+                            bus.react_left_step = 0 if returned_step is None else max(bus.REACT_STEPS - returned_step, 0)
+                    else:
                         bus.lane_target = None
                         bus.berth_target = None
-                    else:
-                        bus.lane_target = 'leaving'
-                        bus.berth_target = None
-                        bus.is_moving_target_set = True
-                        bus.react_left_step = 0 if returned_step is None else max(bus.REACT_STEPS - returned_step, 0)
-                        self._downstream_buffer.last_ordered = True
             return
 
         # not the most-downstream space ...
@@ -419,16 +423,21 @@ class Stop(object):
                             bus.lane_target = None
                             bus.berth_target = None
                     else:
-                        is_ordered, returned_step = self._downstream_buffer.check_last_buffer()
-                        if is_ordered or returned_step == 0:
+                        # if self._downstream_buffer.check_if_can_in() and self._downstream_buffer.is_invading == False:
+                        if self._downstream_buffer.is_invading == False:
+                            returned_step = self._downstream_buffer.check_final_buffer()
+                            if returned_step == 0:
+                                bus.lane_target = None
+                                bus.berth_target = None
+                            else:
+                                bus.berth_target = 'leaving'
+                                bus.lane_target = None
+                                bus.is_moving_target_set = True
+                                bus.react_left_step = 0 if returned_step is None else max(bus.REACT_STEPS - returned_step, 0)
+                                self._downstream_buffer.is_invading = True
+                        else:
                             bus.lane_target = None
                             bus.berth_target = None
-                        else:
-                            bus.berth_target = 'leaving'
-                            bus.lane_target = None
-                            bus.is_moving_target_set = True
-                            bus.react_left_step = 0 if returned_step is None else max(bus.REACT_STEPS - returned_step, 0)
-                            self._downstream_buffer.last_ordered = True
                 return
 
             # not the most-downstream berth ...
@@ -448,12 +457,13 @@ class Stop(object):
                     # check the insertion mark
                     (order_place, return_reaction) = self._set_order_and_target_b2l(which_berth)
                     if order_place is not None:
-                        can_move_to_next_place = True
-                        bus.lane_target = order_place
-                        bus.berth_target = None
-                        bus.react_left_step = return_reaction
-                        bus.is_moving_target_set = True
-                        self._place_order_marks[order_place] = bus
+                        if self._downstream_buffer is None or self._downstream_buffer.check_if_can_in():
+                            can_move_to_next_place = True
+                            bus.lane_target = order_place
+                            bus.berth_target = None
+                            bus.react_left_step = return_reaction
+                            bus.is_moving_target_set = True
+                            self._place_order_marks[order_place] = bus
             
             if can_move_to_next_berth == False and can_move_to_next_place == False:
                     bus.berth_target = which_berth
