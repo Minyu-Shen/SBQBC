@@ -18,7 +18,7 @@ class Buffer(object):
         self._buses_in_buffer= [None] * buffer_size # 0 is the most downstream
         self.is_invading = False
         self.down_signal = down_signal
-        self._book_no = 0
+        self.book_no = 0
         
 
     def update_time_space_info(self, current_time, berth_num):
@@ -28,16 +28,12 @@ class Buffer(object):
             bus.trajectory_locations[current_time] = berth_num + buffer_id + 1
 
     def check_if_can_in(self):
-        # if self.is_invading:
-        #     return False
-        # else:
         curr_no = sum(1 for bus in self._buses_in_buffer if bus != None)
-        assert self._book_no + curr_no <= self.buffer_size, 'no greater than the buffer size'
+        assert self.book_no + curr_no <= self.buffer_size, 'no greater than the buffer size'
         
-        if self._book_no + curr_no == self.buffer_size: # is full
+        if self.book_no + curr_no == self.buffer_size: # is full
             return False
         else:
-            self._book_no += 1
             return True
 
     def check_final_buffer(self):
@@ -51,7 +47,7 @@ class Buffer(object):
         bus.move_up_step = 0
         bus.is_moving_target_set = False
         self._buses_in_buffer[0] = bus
-        self._book_no -= 1
+        self.book_no -= 1
         self.is_invading = False
 
     def discharge(self, curr_t):

@@ -1,7 +1,12 @@
 import hyper_parameters as paras
-from queue import WaveQueue
+from wave_queue import WaveQueue
 # 'process' for methods for sub-stop
 # 'operation' for methods in parent-stop
+import line_profiler
+import atexit
+profile = line_profiler.LineProfiler()
+atexit.register(profile.print_stats)
+
 class Stop(object):
     # stop_num = 0
     SIM_DELTA = paras.sim_delta
@@ -301,7 +306,6 @@ class Stop(object):
                 pass
 
     ########################## target updates ##########################
-
     def _update_targets(self, current_time):
         for loc in range(self._berth_num-1,-1,-1):
             ######### update buses in the lane #########
@@ -454,16 +458,27 @@ class Stop(object):
                 if self._pre_occupies[which_berth+1] is not None: raise SystemExit('Error: conflict-1')
                 # check the overtake-out rule
                 if self._queue_rule in ['LO-Out', 'FO-Bus', 'FO-Lane']:
-                    # check the insertion mark
-                    (order_place, return_reaction) = self._set_order_and_target_b2l(which_berth)
-                    if order_place is not None:
-                        if self._downstream_buffer is None or self._downstream_buffer.check_if_can_in():
+                    # check the buffer state
+                    buffer_ready = False
+                    if self._downstream_buffer is None:
+                        buffer_ready = True
+                    else:
+                        if self._downstream_buffer.buffer_size == 0:
+                            if self._downstream_buffer.down_signal.is_green(self.current_time):
+                                buffer_ready = True
+                        else:
+                            if self._downstream_buffer.check_if_can_in():
+                                buffer_ready = True
+                    if buffer_ready:
+                        (order_place, return_reaction) = self._set_order_and_target_b2l(which_berth)
+                        if order_place is not None:
                             can_move_to_next_place = True
                             bus.lane_target = order_place
                             bus.berth_target = None
                             bus.react_left_step = return_reaction
                             bus.is_moving_target_set = True
                             self._place_order_marks[order_place] = bus
+                            self._downstream_buffer.book_no += 1
             
             if can_move_to_next_berth == False and can_move_to_next_place == False:
                     bus.berth_target = which_berth

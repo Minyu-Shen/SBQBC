@@ -22,7 +22,7 @@ def sim_one_NS_scenario(berth_num, queue_rule, flows, services, persistent, buff
     stop = DistStop(0, berth_num, queue_rule, services, down_buffer, None) # [x:mean_dwell, y: c.v. of dwell]
     total_buses = []
     mean_seq = []
-    # duration = int(3600 * 0.1)
+    # duration = int(3600 * 0.2)
     for epoch in range(0, duration, 1):
         t = epoch * paras.sim_delta
         ##### from downstream to upstream #####
@@ -115,9 +115,9 @@ def plot_NS_time_space(berth_num, total_buses, duration, sim_delta, stop, down_b
 
 if __name__ == "__main__":
     ######### parameters ########
-    cycle_length = 120
-    green_ratio = 1
-    buffer_size = 4
+    cycle_length = 140
+    green_ratio = 0.5
+    buffer_size = 2
 
     berth_num = 4
     # 'LO-Out','LO-In-Bus','FO-Bus','LO-In-Lane', 'FO-Lane'
@@ -144,9 +144,8 @@ if __name__ == "__main__":
     rule2style = {rules[i]: line_styles[i] for i in range(len(rules))}
 
     ######## for desire ########
-    # rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane']
-    rules = ['FIFO', 'LO-Out', 'FO-Bus']
-    # rules = ['FIFO']
+    rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane']
+    # rules = ['FIFO', 'LO-Out', 'FO-Bus']
 
     if persistent:
         c_Ss = [0.1*x for x in range(11)]
@@ -164,12 +163,11 @@ if __name__ == "__main__":
         # plotting ...
         plt, ax = set_x_y_draw('C_S', 'buses/hr')
         for rule, capacities in rule_capacities.items():
-            if rule == 'FO-Lane':
+            if rule == 'FO-Bus':
                 plt.plot(c_Ss, capacities, 'r', linestyle=rule2style[rule], linewidth=2)
             else:
                 plt.plot(c_Ss, capacities, 'k', linestyle=rule2style[rule], linewidth=2)
-        # ax.legend([r'FIFO', r'LO-Out', r'FO-Bus', r'FO-Lane'],\
-            # handlelength=3, fontsize=13)
+        ax.legend([r'FIFO', r'LO-Out', r'FO-Bus', r'FO-Lane'], handlelength=3, fontsize=13)
         plt.show()
     else:
         c_Ss = [0.1*x for x in range(11)]
