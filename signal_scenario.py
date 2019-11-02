@@ -11,7 +11,7 @@ def sim_one_NS_scenario(berth_num, queue_rule, flows, services, persistent, buff
 
     ######## hyper-parameters ########
     eval_every = 3600 * 5
-    duration = eval_every * 10 # the number of epochs
+    duration = eval_every * 5 # the number of epochs
     check_no = 5
     threshold = 0.5 # for convergence check
 
@@ -145,7 +145,7 @@ if __name__ == "__main__":
 
     ######## for desire ########
     rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane']
-    # rules = ['FIFO', 'LO-Out', 'FO-Bus']
+    # rules = ['FO-Bus']
 
     if persistent:
         c_Ss = [0.1*x for x in range(11)]

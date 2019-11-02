@@ -47,4 +47,24 @@ class Bus(object):
         self.service_berth = None
 
     def react_move_operation(self):
-        pass
+        if self.react_left_step > 0:
+            self.react_left_step -= 1
+            return 'reacting'
+        else:
+            if self.move_up_step == 0:
+                self.move_up_step += 1
+                return 'reacted'
+            else:
+                self.move_up_step += 1
+                if self.move_up_step == self.MOVE_UP_STEPS: # has already reached the next loc
+                    return 'moved'
+                else:
+                    return 'moving'
+
+
+    def reset_state(self):
+        self.react_left_step = None
+        self.berth_target = None
+        self.lane_target = None
+        self.move_up_step = 0
+        self.is_moving_target_set = False

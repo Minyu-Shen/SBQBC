@@ -61,9 +61,9 @@ class DistStop(Stop, DistDwell):
         self._entry_operation(t)
 
         ### 4. accumulate delays
-        self._accumulate_delays()
+        # self._accumulate_delays()
 
-        self.update_time_space(t)
+        # self.update_time_space(t)
 
     def _accumulate_delays(self):
         # 1. update enter delay in the queue
