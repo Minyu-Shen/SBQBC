@@ -68,3 +68,9 @@ class Bus(object):
         self.lane_target = None
         self.move_up_step = 0
         self.is_moving_target_set = False
+
+    def set_target(self, lane_target, berth_target, is_moving_target_set=False, react_step=0):
+        self.lane_target = lane_target
+        self.berth_target = berth_target
+        self.is_moving_target_set = is_moving_target_set
+        self.react_left_step = react_step
