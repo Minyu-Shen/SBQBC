@@ -14,16 +14,12 @@ class Bus(object):
         
         ### stats, for corridor, it should be changed to a list, future work ...
         self.arr_mmt = None # the time when a bus arrives in the entry queue
-        self.dpt_stop_mmt = None # the time when a bus leaves stop
         self.service_start_mmt = None # the time when a bus enters the berth to serve
+        self.total_service_time = None
         self.service_end_mmt = None # the time when a bus finishes service
+        self.dpt_stop_mmt = None # the time when a bus leaves stop
         self.enter_delay = 0.0
         self.exit_delay = 0.0
-
-        # self.arr_time = -1.0 # arrived time at stops, negative means not arrived; 
-        # self.etr_time = -1.0
-        # self.dpt_time = -1.0
-        self.serv_time = -1.0
         
         # 'leaving', '1', '2', ... target berth
         self.berth_target = None
@@ -31,6 +27,7 @@ class Bus(object):
         self.is_served = False
         self.wish_berth = None
         self.is_moving_target_set = False
+        self.serv_time = -1.0
 
         ### traffic characteristics in stop
         self.move_up_step = 0
@@ -43,8 +40,8 @@ class Bus(object):
         self.lane_trajectory = []
         self.lane_trajectory_times = []
         self.trajectory_locations = defaultdict(float)
-        
         self.service_berth = None
+
 
     def react_move_operation(self):
         if self.react_left_step > 0:
@@ -60,7 +57,6 @@ class Bus(object):
                     return 'moved'
                 else:
                     return 'moving'
-
 
     def reset_state(self):
         self.react_left_step = None

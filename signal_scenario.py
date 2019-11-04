@@ -117,7 +117,7 @@ if __name__ == "__main__":
     ######### parameters ########
     cycle_length = 140
     green_ratio = 0.5
-    buffer_size = 2
+    buffer_size = 0
 
     berth_num = 4
     # 'LO-Out','LO-In-Bus','FO-Bus','LO-In-Lane', 'FO-Lane'

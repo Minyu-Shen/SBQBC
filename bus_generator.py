@@ -4,9 +4,6 @@ import math
 import random
 from dist_stop import DistStop
 
-np.random.seed(13)
-random.seed(3) # 15
-
 class Generator(object):
     total_bus = 0
     def __init__(self, flows, duration, assign_plan=None):
@@ -19,7 +16,8 @@ class Generator(object):
         for rt, flow in self._flows.items():
             mean_hdw = 3600.0 / flow[0] # in seconds
             cv_hdw = flow[1]
-            arr_times = self._gamma_arrive(duration, mean_hdw, cv_hdw)
+            # arr_times = self._gamma_arrive(duration, mean_hdw, cv_hdw)
+            arr_times = self._normal_independent_arrive(duration, mean_hdw, cv_hdw)
             self._schedules[rt] = arr_times
     
     def poisson_generator(self, rate, t_start, t_stop):
@@ -31,17 +29,37 @@ class Generator(object):
             sts.append(lasttime)
         return sts
 
+    def _normal_independent_arrive(self, duration, mean_hdw, cv_hdw):
+        bus_i = 0
+        arr_times = list()
+        while True:
+            # shape = (bus_i+1)**2 / (cv_hdw**2)
+            # scale = (cv_hdw**2)*mean_hdw / (bus_i+1)
+            # arr_time = np.asscalar(np.random.gamma(shape, scale, 1))
+            mu = (bus_i+1) * mean_hdw 
+            sigma = mean_hdw * cv_hdw
+            unit_normal = np.asscalar(np.random.normal(0, 1, 1))
+            arr_time = mu + unit_normal * sigma
+            if arr_time >= duration:
+                break
+            else:
+                arr_times.append(arr_time)
+            bus_i += 1
+
+        return sorted(arr_times)
+
+
     def _gamma_arrive(self, duration, mean_hdw, cv_hdw):
         shape = 1 / (cv_hdw**2)
         scale = mean_hdw / shape
         arr_times = list()
-        tests = []
+        # tests = []
         if cv_hdw == 1.0: # poisson case
             return self.poisson_generator(1/mean_hdw, t_start=0, t_stop=duration)
         else:
             while True:
                 inter_time = np.asscalar(np.random.gamma(shape, scale, 1))
-                tests.append(inter_time)
+                # tests.append(inter_time)
                 if len(arr_times) == 0:
                     arr_times.append(inter_time)
                 else:
@@ -50,15 +68,16 @@ class Generator(object):
                     else:
                         arr_times.append(arr_times[-1] + inter_time)
         
-        mean = np.mean(np.array(tests))
-        standard = np.std(np.array(tests))
-        print(mean, standard)
+        # mean = np.mean(np.array(tests))
+        # standard = np.std(np.array(tests))
+        # print(mean, standard)
         return arr_times
     
     def dispatch(self, t, persistent=False):
         if not persistent:
             dspting_buses = []
             for rt, schedule in self._schedules.items():
+                if len(schedule) == 0: continue
                 while schedule[0] <= t:
                     schedule.pop(0)
                     if self._assign_plan is None:
@@ -67,9 +86,8 @@ class Generator(object):
                         bus = Bus(Generator.total_bus, rt, berth=self._assign_plan[rt])
                     Generator.total_bus += 1
                     dspting_buses.append(bus)
-                    # always has a bus's arrival time greater than simulation duration, no need to break
-                    # if len(schedule) == 0:
-                        # break
+                    
+                    if len(schedule) == 0: break
             
             return dspting_buses
         else:
@@ -81,20 +99,19 @@ class Generator(object):
             else:
                 rt = random.randint(0,3)
                 bus = Bus(Generator.total_bus, route=rt, berth=self._assign_plan[rt])
-                        
+
             Generator.total_bus += 1
             return bus
 
 if __name__ == "__main__":
     import hyper_parameters as paras
     
-    flows = {0: [50, 1.0], 1:[100, 1.0], 2:[25, 1.0]} # [buses/hr, c.v.]
+    flows = {0: [50, 0.6], 1:[100, 0.6], 2:[25, 0.6]} # [buses/hr, c.v.]
     assign_plan = {0:1, 1:2, 2:0} # line -> berth
-    generator = Generator(flows, 800, assign_plan=assign_plan)
+    generator = Generator(flows, 1000, assign_plan=assign_plan)
 
-    for t in np.arange(0.0, 800.0, paras.sim_delta):
+    for t in np.arange(0.0, 1000.0, paras.sim_delta):
         buses = generator.dispatch(t)
-        # for bus in buses:
-            # print(t, 'bus id: ' + str(bus.bus_id), 'bus line: ', str(bus.route))
+        for bus in buses:
+            print(t, 'bus id: ' + str(bus.bus_id), 'bus line: ', str(bus.route))
 
-    # print(generator.poisson_generator(1))

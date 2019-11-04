@@ -15,6 +15,7 @@ class DistStop(Stop, DistDwell):
         Stop.bus_arrival(self, bus, t)
         # generate service time upon arrival in the entry queue
         bus.serv_time = self.get_random_serv_time(bus.route) # inherited from 'DistDwell'
+        bus.total_service_time = bus.serv_time
         bus.arr_mmt = t
 
     def _service_process(self, t):

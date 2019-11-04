@@ -395,7 +395,7 @@ class Stop(object):
                             can_move_to_next_place = True
                             bus.set_target(order_place, None, True, return_reaction)
                             self._place_order_marks[order_place] = bus
-                            self._downstream_buffer.book_no += 1
+                            if self._downstream_buffer is not None: self._downstream_buffer.book_no += 1
             
             if can_move_to_next_berth == False and can_move_to_next_place == False:
                     bus.set_target(None, which_berth)

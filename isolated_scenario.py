@@ -1,19 +1,21 @@
 from bus_generator import Generator
 from dist_stop import DistStop
-from signal import Signal
 import numpy as np
 import hyper_parameters as paras
-from arena import set_x_y_draw
 import matplotlib.pyplot as plt
-from arena import calculate_avg_delay, calculate_list_std
+from arena import calculate_avg_delay, calculate_list_std, generate_line_info, assign_plan_enumerator, make_assign_plan, set_x_y_draw
+from multiprocessing import Pool, cpu_count, Process
+import concurrent.futures
 
-def sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan=None):
-
+# def sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan):
+def sim_one_isolated_scenario(*args):
+    berth_num, queue_rule, flows, services, persistent, assign_plan = args[0]
+    # print('......', assign_plan)
     ######## hyper-parameters ########
-    eval_every = 3600 * 5
-    duration = eval_every * 10 # the number of epochs
+    eval_every = 3600 * 10
+    duration = eval_every * 50 # the number of epochs
     check_no = 5
-    threshold = 0.5 # for convergence check
+    threshold = 0.25 # for convergence check
 
     ######## simulation ########
     generator = Generator(flows, duration, assign_plan)
@@ -51,13 +53,13 @@ def sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent
                 # print(mean_seq)
             if len(mean_seq) >= check_no: # at least
                 mean_seq_std = calculate_list_std(mean_seq[-check_no:])
-                if mean_seq_std < threshold: return mean_seq[-1]
+                if mean_seq_std < threshold: return (assign_plan, mean_seq[-1])
         
 
     if duration < 1800:
         plot_time_space(berth_num, total_buses, duration, paras.sim_delta, stop)
-
-    return mean_seq[-1]
+    # print((assign_plan, mean_seq[-1]))
+    return (assign_plan, mean_seq[-1])
 
 
 def plot_time_space(berth_num, total_buses, duration, sim_delta, stop):
@@ -96,29 +98,27 @@ def plot_time_space(berth_num, total_buses, duration, sim_delta, stop):
     plt.show()
 
 
-if __name__ == "__main__":
+def testing():
     ######### parameters ########
     berth_num = 4
-    # 'LO-Out','LO-In-Bus','FO-Bus','LO-In-Lane', 'FO-Lane'
-    queue_rule = 'FO-Bus'
-    # queue_rule = 'FIFO'
-    mu_S = 25 # seconds
-    c_S = 0.4
-    c_H = 1 # arrival headway variation
-    persistent = True
-
     f = 140.0 # buses/hr
-    # assign_plan = {0:0, 1:1, 2:2, 3:3} # line -> berth
-    assign_plan = None
-    flows = {0: [f/4, 1.0], 1:[f/4, 1.0], 2:[f/4, 1.0], 3:[f/4, 1.0]} # [buses/hr, c.v.]
-    services = {0: [mu_S, c_S], 1: [mu_S, c_S], 2: [mu_S, c_S], 3: [mu_S, c_S]}
+    mu_S = 25 # seconds
+    line_no = 4
+    persistent = False
+    assign_plan = {0:0, 1:1, 2:2, 3:3} # line -> berth
+    # assign_plan = None
+    flows, services = generate_line_info(line_no, f, mu_S)
+
+    # flows = {0: [f/4, 1.0], 1:[f/4, 1.0], 2:[f/4, 1.0], 3:[f/4, 1.0]} # [buses/hr, c.v.]
+    # services = {0: [mu_S, c_S], 1: [mu_S, c_S], 2: [mu_S, c_S], 3: [mu_S, c_S]}
 
     ######### for plotting time-space diagram ########
+    # queue_rule = 'FO-Bus'
     # res = sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan)
 
     ### plot settings
-    line_styles = ['-', ':', '--', '-.', '-.']
-    rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane', 'LO-In-Bus']
+    line_styles = ['-', ':', '--', '-.']
+    rules = ['FIFO', 'LO-Out', 'FO-Bus', 'FO-Lane']
     rule2style = {rules[i]: line_styles[i] for i in range(len(rules))}
 
     ######### for desire ########
@@ -145,8 +145,7 @@ if __name__ == "__main__":
                 plt.plot(c_Ss, capacities, 'r', linestyle=rule2style[rule], linewidth=2)
             else:
                 plt.plot(c_Ss, capacities, 'k', linestyle=rule2style[rule], linewidth=2)
-        # ax.legend([r'FIFO', r'LO-Out', r'FO-Bus', r'FO-Lane'],\
-            # handlelength=3, fontsize=13)
+        ax.legend([r'FIFO', r'LO-Out', r'FO-Bus', r'FO-Lane'], handlelength=3, fontsize=13)
         plt.show()
     else:
         c_Ss = [0.1*x for x in range(11)]
@@ -172,3 +171,30 @@ if __name__ == "__main__":
         ax.legend(rules, handlelength=3, fontsize=13)
 
         plt.show()
+
+    
+
+if __name__ == "__main__":
+    # testing()
+    np.random.seed(0)
+    berth_num = 2
+    queue_rule = 'FIFO'
+    f = 140.0 # buses/hr
+    mu_S = 25 # seconds
+    line_no = 3
+
+    for case in range(1):
+        flows, services = generate_line_info(line_no, f, mu_S)
+        # print(flows, services)
+
+        # assign_plan = None
+        # delay = sim_one_isolated_scenario(berth_num, queue_rule, flows, services, False, assign_plan)
+        # print(case, assign_plan, delay)
+
+        all_plans = make_assign_plan(line_no, berth_num, flows, services)
+        with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
+            args = ((berth_num, queue_rule, flows, services, False, assign_plan) for assign_plan in all_plans)
+            for result in executor.map(sim_one_isolated_scenario, args):
+                # plan, delay = result
+                print(result)
+
