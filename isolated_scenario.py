@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from arena import calculate_avg_delay, calculate_list_std, generate_line_info, assign_plan_enumerator, make_assign_plan, set_x_y_draw
 from multiprocessing import Pool, cpu_count, Process
 import concurrent.futures
+import pickle
+import time
 
 # def sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan):
 def sim_one_isolated_scenario(*args):
@@ -13,7 +15,7 @@ def sim_one_isolated_scenario(*args):
     # print('......', assign_plan)
     ######## hyper-parameters ########
     eval_every = 3600 * 10
-    duration = eval_every * 50 # the number of epochs
+    duration = eval_every * 20 # the number of epochs
     check_no = 5
     threshold = 0.25 # for convergence check
 
@@ -183,6 +185,7 @@ if __name__ == "__main__":
     mu_S = 25 # seconds
     line_no = 3
 
+
     for case in range(1):
         flows, services = generate_line_info(line_no, f, mu_S)
         # print(flows, services)
@@ -190,11 +193,18 @@ if __name__ == "__main__":
         # assign_plan = None
         # delay = sim_one_isolated_scenario(berth_num, queue_rule, flows, services, False, assign_plan)
         # print(case, assign_plan, delay)
-
+        results = []
         all_plans = make_assign_plan(line_no, berth_num, flows, services)
         with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
             args = ((berth_num, queue_rule, flows, services, False, assign_plan) for assign_plan in all_plans)
             for result in executor.map(sim_one_isolated_scenario, args):
                 # plan, delay = result
-                print(result)
+                results.append(result)
+        
+        with open('test.pkl', 'wb') as f:
+            pickle.dump([results, flows, services], f)
 
+
+    # with open('test.pkl', 'rb') as f:  # Python 3: open(..., 'rb')
+        # results, flows, services = pickle.load(f)
+        # print(results)
