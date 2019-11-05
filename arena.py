@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import math
 import numpy as np
-from itertools import permutations, combinations, product
+from itertools import product
+from collections import defaultdict
 
 def set_x_y_draw(x_label, y_label):
     # draw settings
@@ -55,7 +56,6 @@ def generate_line_info(line_no, total_arrival, mean_service, arrival_cvs=(0.4,0.
         
     return flow_infos, service_infos
 
-
 def assign_plan_enumerator(line_no, berth_num, flow_infos, service_infos):
     berths = [i for i in range(berth_num)]
     for roll in product(berths, repeat = line_no): # roll is a tuple
@@ -70,6 +70,21 @@ def make_assign_plan(line_no, berth_num, flow_infos, service_infos):
             plans.append({l: roll[l] for l in range(line_no)})
 
     return plans
+
+def calculate_rho(assign_plan, flow_infos, service_infos):
+    '''
+    assign_plan - dictionary: line->berth
+    flow_infors - dictionary: line->(arr_mean, arr_cv)
+    service_infos - dictionary: line->(serv_mean, serv_cv)
+    '''
+    dict = defaultdict(float) # berth->rho
+    for line, berth in assign_plan.items():
+        arr_mean = flow_infos[line][0] / 3600 # buses/hr -> buses/sec
+        serv_mean = service_infos[line][0]
+        dict[berth] += arr_mean * serv_mean
+
+    return dict
+
 
 if __name__ == "__main__":
     flow_infos, service_infos = generate_line_info(4, 140, 25, arrival_cvs=(0.6,0.6), service_cvs=(0.4,0.6))
