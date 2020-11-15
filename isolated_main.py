@@ -1,45 +1,47 @@
-import numpy as np
-from isolated_scenario import sim_one_isolated_scenario
-from arena import generate_line_info
+from experiment import ex
+from sacred.observers import MongoObserver
+from concurrent import futures
+from line_profile import generate_line_info, get_generated_line_info
+from arena import assign_plan_enumerator
 
-np.random.seed(0)
-berth_num = 2
-queue_rule = "FIFO"
-f = 170.0  # buses/hr
-mu_S = 25  # seconds
-line_no = 1
 
-for case in range(1):
-    flows, services = generate_line_info(line_no, f, mu_S, service_cvs=(0.5, 0.5))
-    assign_plan = None
-    arg = (berth_num, queue_rule, flows, services, False, assign_plan)
-    delay = sim_one_isolated_scenario(arg)
+@ex.config
+def config():
+    seed = 1
+    berth_num = 2
+    queue_rule = "FIFO"
+    f = 135  # buses/hr
+    mu_S = 25  # seconds
+    line_num = 6
+    set_no = 0
 
-    # results = []
-    # all_plans = make_assign_plan(line_no, berth_num, flows, services)
-    # with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
-    #     args = (
-    #         (berth_num, queue_rule, flows, services, False, assign_plan)
-    #         for assign_plan in all_plans
-    #     )
-    #     for result in executor.map(sim_one_isolated_scenario, args):
-    #         # plan, delay = result
-    #         results.append(result)
 
-    # with open("test.pkl", "wb") as f:
-    #     pickle.dump([results, flows, services], f)
+def run(assign_plan_str):
+    if not ex.observers:
+        ex.observers.append(MongoObserver(url="localhost:27017", db_name="stop"))
+    run = ex.run(config_updates={"assign_plan_str": assign_plan_str})
 
-# with open('one.pkl', 'rb') as f:
-#     results, flows, services = pickle.load(f)
-#     plot_dict = {}
-#     for result in results:
-#         plan, delay = result
-#         rho_plan_dict = calculate_rho(plan, flows, services)
-#         rho_ratio = abs(rho_plan_dict[0] - rho_plan_dict[1])
-#         # print(plan, rho_ratio, delay)
-#         if delay <= 300: plot_dict[rho_ratio] = delay
 
-#     lists = sorted(plot_dict.items()) # sorted by key, return a list of tuples
-#     x, y = zip(*lists) # unpack a list of pairs into two tuples
-#     plt.plot(x, y)
-#     plt.show()
+enumerator = assign_plan_enumerator(line_num=6, berth_num=2)
+assign_plans = [plan for plan in enumerator]
+# assign_plans = assign_plans[0:1]
+# assign_plans = [None]
+with futures.ProcessPoolExecutor(max_workers=12) as executor:
+    tasks = [executor.submit(run, str(assign_plan)) for assign_plan in assign_plans]
+    for future in futures.as_completed(tasks):
+        pass
+
+
+# line_profile = get_generated_line_info(berth_num=2, line_num=6, set_no=0)
+# print(line_profile)
+
+# ex.observers.append(MongoObserver(url="localhost:27017", db_name="stop"))
+# ex.run(config_updates={"assign_plan": })
+
+
+# mu_Ss = [x for x in range(5, 26, 1)]
+# with futures.ProcessPoolExecutor(max_workers=10) as executor:
+#     tasks = [executor.submit(run, mu_S) for mu_S in mu_Ss]
+#     for future in futures.as_completed(tasks):
+#         print("finished ... ")
+

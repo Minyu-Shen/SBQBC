@@ -64,15 +64,16 @@ def plot_time_space(berth_num, total_buses, duration, sim_delta, stop):
     plt.show()
 
 
-def check_convergence(delay_each_round_list):
-    mean = sum(delay_each_round_list) / len(delay_each_round_list)
-    print(mean)
+def check_convergence(eval_mean_list, threshold):
+    std = np.std(np.array(eval_mean_list))
+    return True if std <= threshold else False
 
 
 def calculate_list_std(data_list):
     mean = sum(data_list) / len(data_list)
     std = math.sqrt(sum([(xi - mean) ** 2 for xi in data_list]) / (len(data_list) - 1))
     return std
+
 
 def calculate_avg_delay(total_buses):
     # calculate delays
@@ -87,67 +88,73 @@ def calculate_avg_delay(total_buses):
     return bus_delay_count / bus_count * 1.0
 
 
-def generate_line_info(
-    line_no, total_arrival, mean_service, arrival_cvs=(1.0, 1.0), service_cvs=(0.4, 0.6)
-):
-    """
-    total_arrival - buses/hr
-    mean_service - seconds
-    """
-    # arrival line infos
-    arr_scale = 5  # larger scale, smaller variance of arrival flow mean
-    if line_no == 1:
-        return {0: [total_arrival, arrival_cvs[0]]}, {0: [mean_service, service_cvs[0]]}
+# def generate_line_info(
+#     line_num,
+#     total_arrival,
+#     mean_service,
+#     arr_scale,
+#     service_scale,
+#     arrival_cvs=(1.0, 1.0),
+#     service_cvs=(0.4, 0.6),
+# ):
+#     """
+#     total_arrival - buses/hr
+#     mean_service - seconds
+#     """
+#     # arrival line infos
+#     if line_num == 1:
+#         return {0: [total_arrival, arrival_cvs[0]]}, {0: [mean_service, service_cvs[0]]}
 
-    arr_flows = (
-        np.random.dirichlet(np.ones(line_no) * arr_scale, size=1).squeeze()
-        * total_arrival
-    )
+#     arr_scale = 5  # larger scale, smaller variance of arrival flow mean
+#     arr_flows = (
+#         np.random.dirichlet(np.ones(line_num) * arr_scale, size=1).squeeze()
+#         * total_arrival
+#     )
 
-    # service line infors
-    service_scale = 20  # larger scale, smaller variance of service mean
-    service_means = (
-        np.random.dirichlet(np.ones(line_no) * service_scale, size=1).squeeze()
-        * mean_service
-        * line_no
-    )
-    flow_infos = {}
-    service_infos = {}
+#     # service line infors
+#     service_scale = 20  # larger scale, smaller variance of service mean
+#     service_means = (
+#         np.random.dirichlet(np.ones(line_num) * service_scale, size=1).squeeze()
+#         * mean_service
+#         * line_num
+#     )
+#     flow_infos = {}
+#     service_infos = {}
 
-    for i in range(line_no):
-        arr_cv = (
-            arrival_cvs[0]
-            if arrival_cvs[0] == arrival_cvs[1]
-            else np.random.uniform(arrival_cvs[0], arrival_cvs[1])
-        )
-        flow_infos[i] = (arr_flows[i], arr_cv)
-        service_cv = (
-            service_cvs[0]
-            if service_cvs[0] == service_cvs[1]
-            else np.random.uniform(service_cvs[0], service_cvs[1])
-        )
-        service_infos[i] = (service_means[i], service_cv)
+#     for i in range(line_num):
+#         arr_cv = (
+#             arrival_cvs[0]
+#             if arrival_cvs[0] == arrival_cvs[1]
+#             else np.random.uniform(arrival_cvs[0], arrival_cvs[1])
+#         )
+#         flow_infos[i] = (arr_flows[i], arr_cv)
+#         service_cv = (
+#             service_cvs[0]
+#             if service_cvs[0] == service_cvs[1]
+#             else np.random.uniform(service_cvs[0], service_cvs[1])
+#         )
+#         service_infos[i] = (service_means[i], service_cv)
 
-    return flow_infos, service_infos
+#     return flow_infos, service_infos
 
 
-def assign_plan_enumerator(line_no, berth_num):
+def assign_plan_enumerator(line_num, berth_num):
     berths = [i for i in range(berth_num)]
-    for roll in product(berths, repeat=line_no):  # roll is a tuple
+    for roll in product(berths, repeat=line_num):  # roll is a tuple
         if (
             len(set(roll)) == berth_num
         ):  # all berths should be assigned at least one line
-            yield {l: roll[l] for l in range(line_no)}
+            yield {l: roll[l] for l in range(line_num)}
 
 
-def make_assign_plan(line_no, berth_num, flow_infos, service_infos):
+def make_assign_plan(line_num, berth_num, flow_infos, service_infos):
     berths = [i for i in range(berth_num)]
     plans = []
-    for roll in product(berths, repeat=line_no):  # roll is a tuple
+    for roll in product(berths, repeat=line_num):  # roll is a tuple
         if (
             len(set(roll)) == berth_num
         ):  # all berths should be assigned at least one line
-            plans.append({l: roll[l] for l in range(line_no)})
+            plans.append({l: roll[l] for l in range(line_num)})
 
     return plans
 
@@ -167,9 +174,20 @@ def calculate_rho(assign_plan, flow_infos, service_infos):
     return berth_rho_dict
 
 
+def uniform_sample_from_unit_simplex(size, dim, scale=1.0):
+    # sample from dirichlet distribution
+    samples = np.random.dirichlet(np.ones(dim) * scale, size=size).squeeze()
+    # print(samples.shape)
+
+    # fig, ax = plt.subplots()
+    # ax.scatter(samples[:, 0:1], samples[:, 1:2], s=4)
+    # fig.savefig("figs/sample_simplex.jpg")
+
+    return samples
+
+
 if __name__ == "__main__":
-    flow_infos, service_infos = generate_line_info(4, 140, 25, service_cvs=(0.4, 0.6))
-    print(flow_infos)
-    print(service_infos)
-    # for i in assign_plan_enumerator(line_no=3, berth_num=2):
+    samples = uniform_sample_from_unit_simplex(5000, 3)
+
+    # for i in assign_plan_enumerator(line_num=3, berth_num=2):
     #     print(i)

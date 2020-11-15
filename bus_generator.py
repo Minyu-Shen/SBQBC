@@ -23,8 +23,8 @@ class Generator(object):
         for rt, flow in self._flows.items():
             mean_hdw = 3600.0 / flow[0]  # in seconds
             cv_hdw = flow[1]
-            arr_times = self._gamma_arrive(duration, mean_hdw, cv_hdw)
-            # arr_times = self._normal_independent_arrive(duration, mean_hdw, cv_hdw)
+            # arr_times = self._gamma_arrive(duration, mean_hdw, cv_hdw)
+            arr_times = self._normal_independent_arrive(duration, mean_hdw, cv_hdw)
             self._schedules[rt] = arr_times
         # print(len(self._schedules[0]))
         # print(len(self._schedules[0]))
@@ -33,7 +33,7 @@ class Generator(object):
         sts = []
         lasttime = 0
         while lasttime <= (t_stop):
-            next_st = -math.log(1.0 - random.random()) / rate
+            next_st = -math.log(1.0 - np.random.random_sample()) / rate
             lasttime += next_st
             sts.append(lasttime)
         return sts
@@ -47,7 +47,8 @@ class Generator(object):
             # arr_time = np.asscalar(np.random.gamma(shape, scale, 1))
             mu = (bus_i + 1) * mean_hdw
             sigma = mean_hdw * cv_hdw
-            unit_normal = np.asscalar(np.random.normal(0, 1, 1))
+            unit_normal = np.random.randn()
+            # unit_normal = np.asscalar(np.random.normal(0, 1, 1))
             arr_time = mu + unit_normal * sigma
             if arr_time >= duration:
                 break

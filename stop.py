@@ -3,11 +3,11 @@ from wave_queue import WaveQueue
 
 # 'process' for methods for sub-stop
 # 'operation' for methods in parent-stop
-import line_profiler
-import atexit
 
-profile = line_profiler.LineProfiler()
-atexit.register(profile.print_stats)
+# import line_profiler
+# import atexit
+# profile = line_profiler.LineProfiler()
+# atexit.register(profile.print_stats)
 
 
 class Stop(object):

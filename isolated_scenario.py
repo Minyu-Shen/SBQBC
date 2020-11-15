@@ -2,7 +2,7 @@ from bus_generator import Generator
 from dist_stop import DistStop
 import numpy as np
 import hyper_parameters as paras
-from arena import *
+from arena import calculate_avg_delay, check_convergence
 from multiprocessing import Pool, cpu_count, Process
 import concurrent.futures
 import pickle
@@ -10,70 +10,78 @@ import time
 
 # def sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan):
 def sim_one_isolated_scenario(*args):
-    berth_num, queue_rule, flows, services, persistent, assign_plan = args[0]
+    berth_num, queue_rule, flows, services, persistent, assign_plan = args
     ######## hyper-parameters ########
-    # eval_every = 3600 * 20
-    # duration = eval_every * 200  # the number of epochs
-    # threshold = 0.15  # for convergence check
+    max_tolerance_delay = 15 * 60.0  # seconds
+    each_eval_interval = 3600 * 10
+    total_eval_num = 60
+    epoch_num = each_eval_interval * total_eval_num  # the total number of epochs
+
+    minimum_eval_num = 15
+    minimum_epoch_num = minimum_eval_num * each_eval_interval
+    # if the last *std_num* of mean_seq is greater than threshold, return
+    std_num = 10
+    threshold = 0.03
 
     ######## simulation ########
-    duration = int(3600 * 5 / paras.sim_delta)
+    # duration = int(epoch_num / paras.sim_delta)
+    duration = int(epoch_num * paras.sim_delta)
     generator = Generator(flows, duration, assign_plan)
     stop = DistStop(0, berth_num, queue_rule, services, None, None)
     total_buses = []
     mean_seq = []
-    sim_round = 500
-    for _ in range(sim_round):
-        for epoch in range(0, duration, 1):
-            t = epoch * paras.sim_delta
-            ### operation at the stop ...
-            stop.process(t)
+    for epoch in range(0, epoch_num, 1):
+        t = epoch * paras.sim_delta
+        ### operation at the stop ...
+        stop.process(t)
 
-            ### dispatch process ...
+        ### dispatch process ...
+        if persistent:
+            # the capacity case, keep the entry queue length == berth_num
+            while stop.get_entry_queue_length() < berth_num:
+                bus = generator.dispatch(t, persistent=True)
+                total_buses.append(bus)
+                stop.bus_arrival(bus, t)
+        else:
+            # according to arrival table
+            dispatched_buses = generator.dispatch(t)
+            for bus in dispatched_buses:
+                total_buses.append(bus)
+                stop.bus_arrival(bus, t)
+
+        ### evaluate the convergence
+        if epoch % each_eval_interval == 0 and epoch != 0:
             if persistent:
-                # the capacity case, keep the entry queue length == berth_num
-                while stop.get_entry_queue_length() < berth_num:
-                    bus = generator.dispatch(t, persistent=True)
-                    total_buses.append(bus)
-                    stop.bus_arrival(bus, t)
+                mean_seq.append(stop.exit_counting / (t * 1.0) * 3600)
             else:
-                # according to arrival table
-                dispatched_buses = generator.dispatch(t)
-                for bus in dispatched_buses:
-                    total_buses.append(bus)
-                    stop.bus_arrival(bus, t)
+                mean_seq.append(calculate_avg_delay(total_buses))
+            if mean_seq[-1] >= max_tolerance_delay:
+                return mean_seq
+            if epoch > minimum_epoch_num:
+                if check_convergence(mean_seq[-std_num:], threshold):
+                    return mean_seq
 
-            ### evaluate the convergence
-            # if epoch % eval_every == 0 and epoch != 0:
-            #     if persistent:
-            #         mean_seq.append(stop.exit_counting / (t * 1.0) * 3600)
-            #     else:
-            #         mean_seq.append(calculate_avg_delay(total_buses))
+    ### reset for next round
+    # stop.reset()
+    # generator.reset()
+    # total_buses = []
 
-        mean_seq.append(calculate_avg_delay(total_buses))
-        stop.reset()
-        generator.reset()
-        total_buses = []
+    # return (assign_plan, mean_seq[-1])
+    return mean_seq
 
-    check_convergence(mean_seq)
-    return (assign_plan, mean_seq[-1])
 
-    # if len(mean_seq) >= check_no:
-    #     mean_seq_std = calculate_list_std(mean_seq[-check_no:])
-    #     if mean_seq_std < threshold:
-    #         return (assign_plan, mean_seq[-1])
-
+"""
 
 def test():
     ######### parameters ########
     berth_num = 4
     total_bus_flow = 140.0  # buses/hr
     mu_S = 25  # seconds
-    line_no = 4
+    line_num = 4
     persistent = False
     assign_plan = {0: 0, 1: 1, 2: 2, 3: 3}  # line -> berth
     # assign_plan = None
-    flows, services = generate_line_info(line_no, total_bus_flow, mu_S)
+    flows, services = generate_line_info(line_num, total_bus_flow, mu_S)
 
     # flows = {0: [f/4, 1.0], 1:[f/4, 1.0], 2:[f/4, 1.0], 3:[f/4, 1.0]} # [buses/hr, c.v.]
     # services = {0: [mu_S, c_S], 1: [mu_S, c_S], 2: [mu_S, c_S], 3: [mu_S, c_S]}
@@ -148,7 +156,9 @@ def test():
         ax.legend(rules, handlelength=3, fontsize=13)
 
         plt.show()
+"""
 
 
 if __name__ == "__main__":
     pass
+
