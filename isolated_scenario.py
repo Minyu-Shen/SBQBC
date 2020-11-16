@@ -1,26 +1,22 @@
 from bus_generator import Generator
 from dist_stop import DistStop
-import numpy as np
 import hyper_parameters as paras
 from arena import calculate_avg_delay, check_convergence
-from multiprocessing import Pool, cpu_count, Process
-import concurrent.futures
-import pickle
-import time
+# from multiprocessing import Pool, cpu_count, Process
 
 # def sim_one_isolated_scenario(berth_num, queue_rule, flows, services, persistent, assign_plan):
 def sim_one_isolated_scenario(*args):
-    berth_num, queue_rule, flows, services, persistent, assign_plan = args
+    queue_rule, berth_num, flows, services, is_persistent, assign_plan = args
     ######## hyper-parameters ########
-    max_tolerance_delay = 15 * 60.0  # seconds
+    max_tolerance_delay = paras.max_tolerance_delay  # seconds
     each_eval_interval = 3600 * 10
-    total_eval_num = 60
+    total_eval_num = 60  # 600
     epoch_num = each_eval_interval * total_eval_num  # the total number of epochs
 
-    minimum_eval_num = 15
+    minimum_eval_num = 15  # 150
     minimum_epoch_num = minimum_eval_num * each_eval_interval
     # if the last *std_num* of mean_seq is greater than threshold, return
-    std_num = 10
+    std_num = 10  # 20
     threshold = 0.03
 
     ######## simulation ########
@@ -36,7 +32,7 @@ def sim_one_isolated_scenario(*args):
         stop.process(t)
 
         ### dispatch process ...
-        if persistent:
+        if is_persistent:
             # the capacity case, keep the entry queue length == berth_num
             while stop.get_entry_queue_length() < berth_num:
                 bus = generator.dispatch(t, persistent=True)
@@ -51,7 +47,7 @@ def sim_one_isolated_scenario(*args):
 
         ### evaluate the convergence
         if epoch % each_eval_interval == 0 and epoch != 0:
-            if persistent:
+            if is_persistent:
                 mean_seq.append(stop.exit_counting / (t * 1.0) * 3600)
             else:
                 mean_seq.append(calculate_avg_delay(total_buses))

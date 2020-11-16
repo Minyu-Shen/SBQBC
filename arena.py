@@ -1,8 +1,12 @@
 import matplotlib.pyplot as plt
+import matplotlib.tri as tri
 import math
 import numpy as np
 from itertools import product
 from collections import defaultdict
+import ast
+from pymongo import MongoClient
+from sacred_to_df import sacred_to_df
 
 
 def set_x_y_draw(x_label, y_label):
@@ -16,6 +20,42 @@ def set_x_y_draw(x_label, y_label):
     ax.tick_params(axis="both", which="major", labelsize=11)
 
     return plt, ax
+
+
+def plot_contour_by_lists(x, y, z):
+    fig, (ax1, ax2) = plt.subplots(nrows=2)
+
+    x, y, z = np.array(x), np.array(y), np.array(z)
+    n_grid_x = 25
+    n_grid_y = 25
+    n_pts = x.shape[0]
+    xi = np.linspace(x.min(), x.max(), n_grid_x)
+    yi = np.linspace(y.min(), y.max(), n_grid_y)
+    # Perform linear interpolation of the data (x,y)
+    # on a grid defined by (xi,yi)
+    triang = tri.Triangulation(x, y)
+    interpolator = tri.LinearTriInterpolator(triang, z)
+    Xi, Yi = np.meshgrid(xi, yi)
+    zi = interpolator(Xi, Yi)
+
+    ax1.contour(xi, yi, zi, levels=14, linewidths=0.5, colors="k")
+    cntr1 = ax1.contourf(xi, yi, zi, levels=14, cmap="RdBu_r")
+
+    fig.colorbar(cntr1, ax=ax1)
+    # ax1.plot(x, y, "ko", ms=3)
+    ax1.set_title(
+        "grid and contour (%d points, %d grid points)" % (n_pts, n_grid_x * n_grid_y)
+    )
+
+    ax2.tricontour(x, y, z, levels=14, linewidths=0.5, colors="k")
+    cntr2 = ax2.tricontourf(x, y, z, levels=14, cmap="RdBu_r")
+
+    fig.colorbar(cntr2, ax=ax2)
+    # ax2.plot(x, y, "ko", ms=3)
+    ax2.set_title("tricontour (%d points)" % n_pts)
+    plt.subplots_adjust(hspace=0.5)
+
+    return fig
 
 
 def plot_time_space(berth_num, total_buses, duration, sim_delta, stop):
@@ -88,56 +128,6 @@ def calculate_avg_delay(total_buses):
     return bus_delay_count / bus_count * 1.0
 
 
-# def generate_line_info(
-#     line_num,
-#     total_arrival,
-#     mean_service,
-#     arr_scale,
-#     service_scale,
-#     arrival_cvs=(1.0, 1.0),
-#     service_cvs=(0.4, 0.6),
-# ):
-#     """
-#     total_arrival - buses/hr
-#     mean_service - seconds
-#     """
-#     # arrival line infos
-#     if line_num == 1:
-#         return {0: [total_arrival, arrival_cvs[0]]}, {0: [mean_service, service_cvs[0]]}
-
-#     arr_scale = 5  # larger scale, smaller variance of arrival flow mean
-#     arr_flows = (
-#         np.random.dirichlet(np.ones(line_num) * arr_scale, size=1).squeeze()
-#         * total_arrival
-#     )
-
-#     # service line infors
-#     service_scale = 20  # larger scale, smaller variance of service mean
-#     service_means = (
-#         np.random.dirichlet(np.ones(line_num) * service_scale, size=1).squeeze()
-#         * mean_service
-#         * line_num
-#     )
-#     flow_infos = {}
-#     service_infos = {}
-
-#     for i in range(line_num):
-#         arr_cv = (
-#             arrival_cvs[0]
-#             if arrival_cvs[0] == arrival_cvs[1]
-#             else np.random.uniform(arrival_cvs[0], arrival_cvs[1])
-#         )
-#         flow_infos[i] = (arr_flows[i], arr_cv)
-#         service_cv = (
-#             service_cvs[0]
-#             if service_cvs[0] == service_cvs[1]
-#             else np.random.uniform(service_cvs[0], service_cvs[1])
-#         )
-#         service_infos[i] = (service_means[i], service_cv)
-
-#     return flow_infos, service_infos
-
-
 def assign_plan_enumerator(line_num, berth_num):
     berths = [i for i in range(berth_num)]
     for roll in product(berths, repeat=line_num):  # roll is a tuple
@@ -159,19 +149,43 @@ def make_assign_plan(line_num, berth_num, flow_infos, service_infos):
     return plans
 
 
-def calculate_rho(assign_plan, flow_infos, service_infos):
-    """
-    assign_plan - dictionary: line->berth
-    flow_infors - dictionary: line->(arr_mean, arr_cv)
-    service_infos - dictionary: line->(serv_mean, serv_cv)
-    """
-    berth_rho_dict = defaultdict(float)  # berth->rho
-    for line, berth in assign_plan.items():
-        arr_mean = flow_infos[line][0] / 3600  # buses/hr -> buses/sec
-        serv_mean = service_infos[line][0]
-        berth_rho_dict[berth] += arr_mean * serv_mean
+# def calculate_rho(assign_plan, flow_infos, service_infos):
+#     """
+#     assign_plan - dictionary: line->berth
+#     flow_infors - dictionary: line->(arr_mean, arr_cv)
+#     service_infos - dictionary: line->(serv_mean, serv_cv)
+#     """
+#     berth_rho_dict = defaultdict(float)  # berth->rho
+#     for line, berth in assign_plan.items():
+#         arr_mean = flow_infos[line][0] / 3600  # buses/hr -> buses/sec
+#         serv_mean = service_infos[line][0]
+#         berth_rho_dict[berth] += arr_mean * serv_mean
 
-    return berth_rho_dict
+#     return berth_rho_dict
+
+
+def cal_berth_rho_for_each_plan(assign_plan, line_flow, line_service):
+    # if assign_plan is a string, covnert it
+    """
+    line_flow, dict: ln -> info tuple
+    line_service, dict: ln -> info tuple
+    """
+    assign_plan = (
+        ast.literal_eval(assign_plan) if type(assign_plan) == str else assign_plan
+    )
+    line_rho = {
+        int(ln): (line_flow[ln][0] / 3600.0) * line_service[ln][0] for ln in line_flow
+    }
+    berth_num = len(set(assign_plan.values()))
+    berth_rho = [0.0] * berth_num
+    # berth_flow = [0.0] * berth_num
+    # berth_service = [0.0] * berth_num
+    for ln, berth in assign_plan.items():
+        # berth_flow[berth] += line_flow[str(ln)][0]
+        # berth_service[berth] += line_service[str(ln)][0]
+        berth_rho[berth] += line_rho[ln]
+    # berth_rho = [(x / 3600.0) * y for x, y in zip(berth_flow, berth_service)]
+    return berth_rho
 
 
 def uniform_sample_from_unit_simplex(size, dim, scale=1.0):
@@ -184,6 +198,20 @@ def uniform_sample_from_unit_simplex(size, dim, scale=1.0):
     # fig.savefig("figs/sample_simplex.jpg")
 
     return samples
+
+
+def get_profile_and_df_from_db(berth_num, line_num, set_no):
+    client = MongoClient("localhost", 27017)
+    db = client["stop"]
+
+    query = {"berth_num": berth_num, "line_num": line_num, "set_no": set_no}
+    profile = db.line_profile.find(query)[0]
+    line_flow, line_service = profile["line_flow"], profile["line_service"]
+
+    query = "line_num=={} and berth_num=={}".format(line_num, berth_num)
+    run_df = sacred_to_df(db.runs).query(query)
+
+    return line_flow, line_service, run_df
 
 
 if __name__ == "__main__":

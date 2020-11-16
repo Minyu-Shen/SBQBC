@@ -22,3 +22,4 @@ reaction_steps = int(react_time / sim_delta)
 move_up_steps = int(move_up_time / sim_delta)
 
 # print('reaction_steps: {}, move_up_steps: {}'.format(reaction_steps, move_up_steps))
+max_tolerance_delay = 15 * 60.0  # seconds

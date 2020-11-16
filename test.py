@@ -1,11 +1,11 @@
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
-point = Point(1 / 3.0, 1 / 3.0, 1 / 3.0)
-polygon = Polygon([[1, 0, 0], [0, 1, 0], [ 0, 0, 1 ]])
-# polygon = Polygon([(0, 0, 0), (0, 0, 1), (1, 1, 1)])
-print(polygon.is_valid)
-print(polygon.area)
+# point = Point(1 / 3.0, 1 / 3.0, 1 / 3.0)
+# polygon = Polygon([[1, 0, 0], [0, 1, 0], [ 0, 0, 1 ]])
+# print(polygon.is_valid)
+# print(polygon.area)
+
 # print(polygon.contains(point))
 
 # def change(a):
