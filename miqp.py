@@ -5,17 +5,15 @@ from line_profile import get_generated_line_info
 
 
 def get_closest_discrete_from_continuous(
-    line_flow_mean, line_service_mean, continuous_rhos, by="rho"
+    line_flow, line_service, continuous_rhos, by="rho"
 ):
     """
-    line_flow_mean - dict: ln -> buses/hr
-    line_service_mean - dict: ln -> seconds
+    line_flow_mean - dict: ln -> info tuple
+    line_service_mean - dict: ln -> info tuple
     continuous_rhos - list of rho decion vector
     """
-    line_rho = {
-        ln: line_flow_mean[ln] / 3600.0 * line_service_mean[ln] for ln in line_flow_mean
-    }
-    line_num = len(line_flow_mean)
+    line_rho = {ln: line_flow[ln][0] / 3600.0 * line_service[ln][0] for ln in line_flow}
+    line_num = len(line_flow)
     berth_num = len(continuous_rhos)
 
     x = cp.Variable((line_num * berth_num, 1), boolean=True)
@@ -26,8 +24,15 @@ def get_closest_discrete_from_continuous(
         one_line_for_all_berths_idx = range(ln * berth_num, (ln + 1) * berth_num, 1)
         for ln_berth_idx in one_line_for_all_berths_idx:
             sum_x += x[ln_berth_idx, 0]
-        # print(sum_x == 1)
         constrs.append(sum_x == 1)
+        sum_x = 0
+
+    # at least one line should be assigned to each berth
+    sum_x = 0
+    for berth in range(berth_num):
+        for idx in range(berth, berth_num * line_num, berth_num):
+            sum_x += x[idx]
+        constrs.append(sum_x >= 1)
         sum_x = 0
 
     A = np.zeros((berth_num, berth_num * line_num))
@@ -60,7 +65,7 @@ def get_closest_discrete_from_continuous(
 if __name__ == "__main__":
     berth_num = 2
     line_num = 6
-    line_flow, line_service = get_generated_line_info(
+    line_flow, line_service, line_rhos = get_generated_line_info(
         berth_num, line_num, 135, "Gaussian", 25, 0
     )
     line_flow_mean = {ln: flow[0] for ln, flow in line_flow.items()}

@@ -7,6 +7,7 @@ from collections import defaultdict
 import ast
 from pymongo import MongoClient
 from sacred_to_df import sacred_to_df
+from miqp import get_closest_discrete_from_continuous
 
 
 def set_x_y_draw(x_label, y_label):
@@ -42,7 +43,7 @@ def plot_contour_by_lists(x, y, z):
     cntr1 = ax1.contourf(xi, yi, zi, levels=14, cmap="RdBu_r")
 
     fig.colorbar(cntr1, ax=ax1)
-    # ax1.plot(x, y, "ko", ms=3)
+    ax1.plot(x, y, "ko", ms=2)
     ax1.set_title(
         "grid and contour (%d points, %d grid points)" % (n_pts, n_grid_x * n_grid_y)
     )
@@ -164,6 +165,25 @@ def make_assign_plan(line_num, berth_num, flow_infos, service_infos):
 #     return berth_rho_dict
 
 
+def get_delay_of_continuous(line_flow, line_service, continuous_vector, run_df=None):
+    # find the closest discrete assignment plan
+    assign_plan = get_closest_discrete_from_continuous(
+        line_flow, line_service, continuous_vector
+    )
+    if run_df is None:  # no cache, directly simulate
+        pass  # TODO
+    else:
+        assign_plan_str = str(assign_plan)
+        query_str = "assign_plan_str==@assign_plan_str"
+        df = run_df.query(query_str)
+        if df.empty:
+            return None, None
+        else:
+            df = df.iloc[0, :]
+            delay = df["delay_seq"][-1]
+            return assign_plan, delay
+
+
 def cal_berth_rho_for_each_plan(assign_plan, line_flow, line_service):
     # if assign_plan is a string, covnert it
     """
@@ -200,22 +220,25 @@ def uniform_sample_from_unit_simplex(size, dim, scale=1.0):
     return samples
 
 
-def get_profile_and_df_from_db(berth_num, line_num, set_no):
+def get_run_df_from_db(
+    berth_num, line_num, total_flow, arrival_type, mean_service, set_no
+):
     client = MongoClient("localhost", 27017)
     db = client["stop"]
 
-    query = {"berth_num": berth_num, "line_num": line_num, "set_no": set_no}
-    profile = db.line_profile.find(query)[0]
-    line_flow, line_service = profile["line_flow"], profile["line_service"]
+    query = "berth_num=={} and line_num=={} and total_flow=={} and arrival_type==@arrival_type and mean_service=={} and set_no=={}".format(
+        berth_num, line_num, total_flow, mean_service, set_no
+    )
 
-    query = "line_num=={} and berth_num=={}".format(line_num, berth_num)
+    # arrival_type = "Gaussian"
+    # query = "arrival_type == @arrival_type"
     run_df = sacred_to_df(db.runs).query(query)
 
-    return line_flow, line_service, run_df
+    return run_df
 
 
 if __name__ == "__main__":
-    samples = uniform_sample_from_unit_simplex(5000, 3)
+    # samples = uniform_sample_from_unit_simplex(5000, 3)
 
-    # for i in assign_plan_enumerator(line_num=3, berth_num=2):
-    #     print(i)
+    for i in assign_plan_enumerator(line_num=3, berth_num=2):
+        print(i)

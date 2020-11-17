@@ -33,17 +33,3 @@ with futures.ProcessPoolExecutor(max_workers=18) as executor:
     for future in futures.as_completed(tasks):
         pass
 
-
-# line_profile = get_generated_line_info(berth_num=2, line_num=6, set_no=0)
-# print(line_profile)
-
-# ex.observers.append(MongoObserver(url="localhost:27017", db_name="stop"))
-# ex.run(config_updates={"assign_plan": })
-
-
-# mu_Ss = [x for x in range(5, 26, 1)]
-# with futures.ProcessPoolExecutor(max_workers=10) as executor:
-#     tasks = [executor.submit(run, mu_S) for mu_S in mu_Ss]
-#     for future in futures.as_completed(tasks):
-#         print("finished ... ")
-

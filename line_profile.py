@@ -76,7 +76,10 @@ def get_generated_line_info(
     # convert the string of line to int, (because MongoDB only support str as key)
     line_flow = {int(ln): flow for ln, flow in results["line_flow"].items()}
     line_service = {int(ln): service for ln, service in results["line_service"].items()}
-    return line_flow, line_service
+    line_rho = {
+        ln: (line_flow[ln][0] / 3600.0) * line_service[ln][0] for ln in line_flow
+    }
+    return line_flow, line_service, line_rho
 
 
 if __name__ == "__main__":
@@ -84,9 +87,9 @@ if __name__ == "__main__":
     db = client["stop"]
     collection = db["line_profile"]
 
-    berth_num = 3
+    berth_num = 2
     line_num = 6
-    total_flow = 160
+    total_flow = 135
     arrival_type = "Gaussian"
     mean_service = 25
     arr_scale = 5  # larger scale, smaller variance of arrival flow mean

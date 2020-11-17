@@ -19,7 +19,7 @@ def main(
     assign_plan_str,
 ):
     print("------------------------ start main ----------------------------")
-    flows, services = get_generated_line_info(
+    flows, services, rhos = get_generated_line_info(
         berth_num, line_num, total_flow, arrival_type, mean_service, set_no
     )
     # print(flows, services)
