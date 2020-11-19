@@ -184,7 +184,7 @@ def get_delay_of_continuous(line_flow, line_service, continuous_vector, run_df=N
             return assign_plan, delay
 
 
-def cal_berth_rho_for_each_plan(assign_plan, line_flow, line_service):
+def cal_berth_f_rho_for_each_plan(assign_plan, line_flow, line_service):
     # if assign_plan is a string, covnert it
     """
     line_flow, dict: ln -> info tuple
@@ -198,14 +198,15 @@ def cal_berth_rho_for_each_plan(assign_plan, line_flow, line_service):
     }
     berth_num = len(set(assign_plan.values()))
     berth_rho = [0.0] * berth_num
+    berth_flow = [0.0] * berth_num
     # berth_flow = [0.0] * berth_num
     # berth_service = [0.0] * berth_num
     for ln, berth in assign_plan.items():
-        # berth_flow[berth] += line_flow[str(ln)][0]
         # berth_service[berth] += line_service[str(ln)][0]
+        berth_flow[berth] += line_flow[ln][0]
         berth_rho[berth] += line_rho[ln]
     # berth_rho = [(x / 3600.0) * y for x, y in zip(berth_flow, berth_service)]
-    return berth_rho
+    return berth_flow, berth_rho
 
 
 def uniform_sample_from_unit_simplex(size, dim, scale=1.0):
@@ -221,12 +222,12 @@ def uniform_sample_from_unit_simplex(size, dim, scale=1.0):
 
 
 def get_run_df_from_db(
-    berth_num, line_num, total_flow, arrival_type, mean_service, set_no
+    queue_rule, berth_num, line_num, total_flow, arrival_type, mean_service, set_no
 ):
     client = MongoClient("localhost", 27017)
     db = client["stop"]
 
-    query = "berth_num=={} and line_num=={} and total_flow=={} and arrival_type==@arrival_type and mean_service=={} and set_no=={}".format(
+    query = "queue_rule==@queue_rule and berth_num=={} and line_num=={} and total_flow=={} and arrival_type==@arrival_type and mean_service=={} and set_no=={}".format(
         berth_num, line_num, total_flow, mean_service, set_no
     )
 

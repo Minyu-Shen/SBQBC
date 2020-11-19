@@ -1,6 +1,6 @@
 from numpy import random
 from arena import (
-    cal_berth_rho_for_each_plan,
+    cal_berth_f_rho_for_each_plan,
     get_delay_of_continuous,
     get_run_df_from_db,
 )
@@ -37,11 +37,12 @@ line_num = 6
 total_flow = 160
 arrival_type = "Gaussian"
 mean_service = 25
+queue_rule = "FIFO"
 set_no = 0
 
 ### algorithm hyper-parameters
-sim_budget = 100
-max_depth = 4  # must >= 3
+sim_budget = 50
+max_depth = 3  # must >= 3
 sample_num_of_each_region = 2
 
 ### build tree
@@ -51,7 +52,7 @@ root_region.print_tree()
 
 ### get profile and simulated data
 run_df = get_run_df_from_db(
-    berth_num, line_num, total_flow, arrival_type, mean_service, set_no
+    queue_rule, berth_num, line_num, total_flow, arrival_type, mean_service, set_no
 )
 line_flow, line_service, line_rho = get_generated_line_info(
     berth_num, line_num, total_flow, arrival_type, mean_service, set_no
@@ -68,7 +69,7 @@ evenest_point = [total_rho / berth_num] * berth_num
 assign_plan, delay = get_delay_of_continuous(
     line_flow, line_service, evenest_point, run_df
 )
-berth_rho = cal_berth_rho_for_each_plan(assign_plan, line_flow, line_service)
+berth_flow, berth_rho = cal_berth_f_rho_for_each_plan(assign_plan, line_flow, line_service)
 for region in regions_at_max_depth:
     unit_berth_rho = [x / total_rho for x in berth_rho]
     is_contain = region.is_point_in_region(unit_berth_rho)

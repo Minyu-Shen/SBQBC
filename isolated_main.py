@@ -8,10 +8,11 @@ from arena import assign_plan_enumerator
 @ex.config
 def config():
     seed = 1
+    # queue_rule = "LO-Out"
     queue_rule = "FIFO"
-    berth_num = 3
-    line_num = 6
-    total_flow = 160  # buses/hr
+    berth_num = 2
+    line_num = 8
+    total_flow = 135  # buses/hr
     arrival_type = "Gaussian"
     mean_service = 25  # seconds
     set_no = 0

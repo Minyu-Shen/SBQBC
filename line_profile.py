@@ -88,7 +88,7 @@ if __name__ == "__main__":
     collection = db["line_profile"]
 
     berth_num = 2
-    line_num = 6
+    line_num = 8
     total_flow = 135
     arrival_type = "Gaussian"
     mean_service = 25
