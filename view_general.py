@@ -3,6 +3,7 @@ from arena import (
     cal_berth_f_rho_for_each_plan,
     plot_contour_by_lists,
     get_run_df_from_db,
+    get_run_df_from_near_stop_db,
 )
 from line_profile import get_generated_line_info
 import numpy as np
@@ -10,20 +11,36 @@ from hyper_parameters import max_tolerance_delay
 
 
 berth_num = 2
-line_num = 12
+line_num = 6
 total_flow = 135
 arrival_type = "Gaussian"
-queue_rule = "LO-Out"
-# queue_rule = "FIFO"
+# queue_rule = "LO-Out"
+queue_rule = "FIFO"
 mean_service = 25
 set_no = 0
+cycle_length = 140
+green_ratio = 0.5
+buffer_size = 4
 
 indicator = "flow"
 indicator = "rho"
 
-run_df = get_run_df_from_db(
-    queue_rule, berth_num, line_num, total_flow, arrival_type, mean_service, set_no
+# run_df = get_run_df_from_db(
+#     queue_rule, berth_num, line_num, total_flow, arrival_type, mean_service, set_no
+# )
+run_df = get_run_df_from_near_stop_db(
+    queue_rule,
+    berth_num,
+    line_num,
+    total_flow,
+    arrival_type,
+    mean_service,
+    set_no,
+    cycle_length,
+    green_ratio,
+    buffer_size,
 )
+
 line_flow, line_service, line_rho = get_generated_line_info(
     berth_num, line_num, total_flow, arrival_type, mean_service, set_no
 )

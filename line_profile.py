@@ -62,7 +62,7 @@ def get_generated_line_info(
     berth_num, line_num, total_flow, arrival_type, mean_service, set_no=0
 ):
     client = MongoClient("localhost", 27017)
-    db = client["stop"]
+    db = client["inputs"]
     collection = db["line_profile"]
     query_dict = {
         "berth_num": berth_num,
@@ -82,13 +82,13 @@ def get_generated_line_info(
     return line_flow, line_service, line_rho
 
 
-if __name__ == "__main__":
+def generate_and_add_to_db():
     client = MongoClient("localhost", 27017)
-    db = client["stop"]
+    db = client["inputs"]
     collection = db["line_profile"]
 
     berth_num = 2
-    line_num = 8
+    line_num = 6
     total_flow = 135
     arrival_type = "Gaussian"
     mean_service = 25
@@ -147,3 +147,7 @@ if __name__ == "__main__":
         # ax2.legend()
         fig.savefig("figs/line_info.jpg")
         # plt.show()
+
+
+if __name__ == "__main__":
+    generate_and_add_to_db()

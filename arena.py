@@ -20,7 +20,7 @@ def set_x_y_draw(x_label, y_label):
     ax.grid(linestyle="--")
     ax.tick_params(axis="both", which="major", labelsize=11)
 
-    return plt, ax
+    return fig, ax
 
 
 def plot_contour_by_lists(x, y, z):
@@ -233,6 +233,39 @@ def get_run_df_from_db(
 
     # arrival_type = "Gaussian"
     # query = "arrival_type == @arrival_type"
+    run_df = sacred_to_df(db.runs).query(query)
+
+    return run_df
+
+
+def get_run_df_from_near_stop_db(
+    queue_rule,
+    berth_num,
+    line_num,
+    total_flow,
+    arrival_type,
+    mean_service,
+    set_no,
+    cycle_length,
+    green_ratio,
+    buffer_size,
+):
+    client = MongoClient("localhost", 27017)
+    db = client["near_stop"]
+
+    query = "queue_rule==@queue_rule and berth_num=={} and line_num=={} and total_flow=={} and arrival_type==@arrival_type and mean_service=={} and set_no=={} and cycle_length=={} and green_ratio=={} and buffer_size=={}".format(
+        berth_num,
+        line_num,
+        total_flow,
+        mean_service,
+        set_no,
+        cycle_length,
+        green_ratio,
+        buffer_size,
+        cycle_length,
+        green_ratio,
+        buffer_size,
+    )
     run_df = sacred_to_df(db.runs).query(query)
 
     return run_df

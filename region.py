@@ -4,7 +4,6 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon, LineString
 from arena import uniform_sample_from_unit_simplex, get_delay_of_continuous
 from operator import attrgetter
-from line_profile import get_generated_line_info
 import matplotlib.pyplot as plt
 from collections import defaultdict
 
