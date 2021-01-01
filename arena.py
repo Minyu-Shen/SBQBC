@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import matplotlib.tri as tri
 import math
 import numpy as np
 from itertools import product
@@ -8,55 +7,6 @@ import ast
 from pymongo import MongoClient
 from sacred_to_df import sacred_to_df
 from miqp import get_closest_discrete_from_continuous
-
-
-def set_x_y_draw(x_label, y_label):
-    # draw settings
-    # plt.rc('text', usetex=True)
-    # plt.rc('font', family='serif')
-    fig, ax = plt.subplots()
-    ax.set_xlabel(x_label, fontsize=13)
-    ax.set_ylabel(y_label, fontsize=13)
-    ax.grid(linestyle="--")
-    ax.tick_params(axis="both", which="major", labelsize=11)
-
-    return fig, ax
-
-
-def plot_contour_by_lists(x, y, z):
-    fig, (ax1, ax2) = plt.subplots(nrows=2)
-
-    x, y, z = np.array(x), np.array(y), np.array(z)
-    n_grid_x = 25
-    n_grid_y = 25
-    n_pts = x.shape[0]
-    xi = np.linspace(x.min(), x.max(), n_grid_x)
-    yi = np.linspace(y.min(), y.max(), n_grid_y)
-    # Perform linear interpolation of the data (x,y)
-    # on a grid defined by (xi,yi)
-    triang = tri.Triangulation(x, y)
-    interpolator = tri.LinearTriInterpolator(triang, z)
-    Xi, Yi = np.meshgrid(xi, yi)
-    zi = interpolator(Xi, Yi)
-
-    ax1.contour(xi, yi, zi, levels=14, linewidths=0.5, colors="k")
-    cntr1 = ax1.contourf(xi, yi, zi, levels=14, cmap="RdBu_r")
-
-    fig.colorbar(cntr1, ax=ax1)
-    ax1.plot(x, y, "ko", ms=2)
-    ax1.set_title(
-        "grid and contour (%d points, %d grid points)" % (n_pts, n_grid_x * n_grid_y)
-    )
-
-    ax2.tricontour(x, y, z, levels=14, linewidths=0.5, colors="k")
-    cntr2 = ax2.tricontourf(x, y, z, levels=14, cmap="RdBu_r")
-
-    fig.colorbar(cntr2, ax=ax2)
-    # ax2.plot(x, y, "ko", ms=3)
-    ax2.set_title("tricontour (%d points)" % n_pts)
-    plt.subplots_adjust(hspace=0.5)
-
-    return fig
 
 
 def plot_time_space(berth_num, total_buses, duration, sim_delta, stop):
@@ -221,9 +171,16 @@ def uniform_sample_from_unit_simplex(size, dim, scale=1.0):
     return samples
 
 
-def get_run_df_from_db(
-    queue_rule, berth_num, line_num, total_flow, arrival_type, mean_service, set_no
-):
+def get_run_df_from_db(stop_setting):
+    (
+        queue_rule,
+        berth_num,
+        line_num,
+        total_flow,
+        arrival_type,
+        mean_service,
+        set_no,
+    ) = stop_setting
     client = MongoClient("localhost", 27017)
     db = client["stop"]
 
@@ -238,18 +195,17 @@ def get_run_df_from_db(
     return run_df
 
 
-def get_run_df_from_near_stop_db(
-    queue_rule,
-    berth_num,
-    line_num,
-    total_flow,
-    arrival_type,
-    mean_service,
-    set_no,
-    cycle_length,
-    green_ratio,
-    buffer_size,
-):
+def get_run_df_from_near_stop_db(stop_setting, signal_setting):
+    (
+        queue_rule,
+        berth_num,
+        line_num,
+        total_flow,
+        arrival_type,
+        mean_service,
+        set_no,
+    ) = stop_setting
+    cycle_length, green_ratio, buffer_size = signal_setting
     client = MongoClient("localhost", 27017)
     db = client["near_stop"]
 
@@ -259,9 +215,6 @@ def get_run_df_from_near_stop_db(
         total_flow,
         mean_service,
         set_no,
-        cycle_length,
-        green_ratio,
-        buffer_size,
         cycle_length,
         green_ratio,
         buffer_size,

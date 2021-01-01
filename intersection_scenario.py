@@ -15,18 +15,31 @@ import parameters as paras
 # green_ratio = 0.5
 # persistent = True
 
-def sim_one_NS_scenario(berth_num, queue_rule, f, mu_S, c_S, \
-        cycle_length, green_ratio, buffer_size, persistent, c_H=1.0):
+
+def sim_one_NS_scenario(
+    berth_num,
+    queue_rule,
+    f,
+    mu_S,
+    c_S,
+    cycle_length,
+    green_ratio,
+    buffer_size,
+    persistent,
+    c_H=1.0,
+):
 
     ######## hyper-parameters ########
     duration = 3600 * 50
 
     ######## simulation ########
-    bus_flows = {0: [f, c_H]} # [x:buses/hr, y: c.v.]
+    bus_flows = {0: [f, c_H]}  # [x:buses/hr, y: c.v.]
     generator = Generator(bus_flows, duration)
 
     signal = Signal(cycle_length, green_ratio, buffer_size)
-    stop = DistStop(0, berth_num, queue_rule, {0: [mu_S, c_S]}, down_signal=signal) # [x:mean_dwell, y: c.v. of dwell]
+    stop = DistStop(
+        0, berth_num, queue_rule, {0: [mu_S, c_S]}, down_signal=signal
+    )  # [x:mean_dwell, y: c.v. of dwell]
     # stop = NormalPaxStop(0, berth_num, {0: pax_lambda}) # pax/sec
 
     total_buses = []
@@ -39,7 +52,7 @@ def sim_one_NS_scenario(berth_num, queue_rule, f, mu_S, c_S, \
         if persistent:
             # the capacity case, keep the entry queue length >= 3
             # print(stop.get_entry_queue_length())
-            while stop.get_entry_queue_length() < berth_num: 
+            while stop.get_entry_queue_length() < berth_num:
                 bus = generator.dispatch(t, persistent=True)
                 total_buses.append(bus)
                 stop.bus_arrival(bus, t)
@@ -50,18 +63,18 @@ def sim_one_NS_scenario(berth_num, queue_rule, f, mu_S, c_S, \
             for bus in dispatched_buses:
                 total_buses.append(bus)
                 stop.bus_arrival(bus, t)
-        
+
         ### operation at the first stop ...
         stop.operation(t)
 
     # calculate mean
     # delays = []
     # for bus in total_buses:
-        # print(bus.arr_time, bus.etr_time, bus.dpt_time)
-        # delays.append(bus.enter_delay + bus.exit_delay)
+    # print(bus.arr_time, bus.etr_time, bus.dpt_time)
+    # delays.append(bus.enter_delay + bus.exit_delay)
     # delays = np.array(delays)
     # print(delays.mean())
 
     # calculate discharing flow and return
-    return stop.leaving_count / (duration*1.0)
+    return stop.leaving_count / (duration * 1.0)
 

@@ -5,9 +5,9 @@ import numpy as np
 from hyper_parameters import max_tolerance_delay
 
 client = MongoClient("localhost", 27017)
-db = client["stop"]
+db = client["near_stop"]
 queue_rule = "FIFO"
-query = "berth_num == 2 and line_num == 8 and queue_rule == @queue_rule"
+query = "berth_num == 2 and line_num == 10 and queue_rule == @queue_rule"
 # db = client["near_stop"]
 # query = "line_num == 6"
 
@@ -20,7 +20,8 @@ for idx, row in df.iterrows():
     eval_num = 20
     std_list = []
     cv_list = []
-    if delay_seq[-1] >= max_tolerance_delay:
+    # if delay_seq[-1] >= max_tolerance_delay:
+    if delay_seq[-1] >= 100:
         continue
     round_num = int(len(delay_seq) / eval_num)
     # for i in range(len(delay_seq) - eval_num):

@@ -25,10 +25,7 @@ buffer_size = 4
 indicator = "flow"
 indicator = "rho"
 
-# run_df = get_run_df_from_db(
-#     queue_rule, berth_num, line_num, total_flow, arrival_type, mean_service, set_no
-# )
-run_df = get_run_df_from_near_stop_db(
+stop_setting = (
     queue_rule,
     berth_num,
     line_num,
@@ -36,10 +33,10 @@ run_df = get_run_df_from_near_stop_db(
     arrival_type,
     mean_service,
     set_no,
-    cycle_length,
-    green_ratio,
-    buffer_size,
 )
+signal_setting = (cycle_length, green_ratio, buffer_size)
+run_df = get_run_df_from_db(stop_setting)
+run_df = get_run_df_from_near_stop_db(stop_setting, signal_setting)
 
 line_flow, line_service, line_rho = get_generated_line_info(
     berth_num, line_num, total_flow, arrival_type, mean_service, set_no
