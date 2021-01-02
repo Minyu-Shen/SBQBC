@@ -1,21 +1,21 @@
 from numpy import random
 from arena import (
     cal_berth_f_rho_for_each_plan,
-    get_delay_of_continuous,
+    get_delay_of_discrete_plan,
     get_run_df_from_db,
     get_run_df_from_near_stop_db,
+    assign_plan_enumerator,
 )
 from line_profile import get_generated_line_info
-from region import build_region_tree
+import random
 
 
 class Opt_Stats(object):
-    def __init__(self, sim_budget):
-        self.sim_budget = sim_budget
+    def __init__(self):
         self.evaled_assign_plans = []
         self.eval_count = 0
 
-        self.min_delay_so_far = 1.0e4
+        self.min_delay_so_far = 1.0e6
         self.history_min_delays = []
 
     def add_eval_info(self, assign_plan, delay):
@@ -26,9 +26,6 @@ class Opt_Stats(object):
             self.history_min_delays.append(self.min_delay_so_far)
         else:
             pass
-
-    def is_budget_run_out(self):
-        return False if self.eval_count < self.sim_budget else True
 
 
 def get_global_min_delay(stop_setting, signal_setting=None):
@@ -63,15 +60,69 @@ def apply_tan_algo(algo_setting, stop_setting, signal_setting=None):
     else:
         run_df = get_run_df_from_near_stop_db(stop_setting, signal_setting)
 
-    ### find start point and its located region of maximum depth
-    evenest_point = [total_rho / berth_num] * berth_num
-    assign_plan, delay = get_delay_of_continuous(
-        line_flow, line_service, evenest_point, run_df
-    )
-    berth_flow, berth_rho = cal_berth_f_rho_for_each_plan(
-        assign_plan, line_flow, line_service
-    )
-    print("--------- end iteration -----------")
-    # print(opt_stats.min_delay_so_far, opt_stats.eval_count)
+    ### create optimization stats object for recording
+    opt_stats = Opt_Stats()
 
-    return None
+    ### divide set into subsets
+    subset_plans_dict = {}
+    for s in range(1, region_num + 1, 1):
+        center = s * 2 * radius - radius
+        subset_plans_dict[center] = []
+
+    ### assign plans to subset
+    enumerator = assign_plan_enumerator(line_num, berth_num)
+    for plan in enumerator:
+        berth_flow, _ = cal_berth_f_rho_for_each_plan(plan, line_flow, line_service)
+        ratio = berth_flow[1] / berth_flow[0]
+        for s in range(1, region_num + 1, 1):
+            center = s * 2 * radius - radius
+            if abs(ratio - center) < radius:
+                subset_plans_dict[center].append(plan)
+                break
+
+    # for subset_center, plans in subset_plans_dict.items():
+    #     print(subset_center, " : ", len(plans))
+
+    print("--------- start iteration -----------")
+    sample_no = 5
+    best_delay_so_far = 1.0e6
+    ### get a general view, i.e, sample 5 for each subset
+    subset_delay_metric = {}
+    for subset_center, plans in subset_plans_dict.items():
+        # if the set no. is smallert than 5, no need to look at it
+        if len(plans) < sample_no:
+            continue
+        rand_samp_plans = random.sample(plans, sample_no)
+        subset_sum = 0.0
+        for rand_samp_plan in rand_samp_plans:
+            delay = get_delay_of_discrete_plan(rand_samp_plan, run_df)
+            opt_stats.add_eval_info(rand_samp_plan, delay)
+            best_delay_so_far = min(best_delay_so_far, delay)
+            subset_sum += delay
+        subset_delay_metric[subset_center] = subset_sum / sample_no
+
+    ### continue exploring the most promising subset
+    promising_subset_center = min(subset_delay_metric.items(), key=lambda x: x[1])[0]
+    promising_subset_plans_list = subset_plans_dict[promising_subset_center]
+
+    while len(promising_subset_plans_list) >= sample_no:
+        rand_plans_list = random.sample(promising_subset_plans_list, sample_no)
+        promising_subset_plans_list = [
+            x for x in promising_subset_plans_list if x not in rand_plans_list
+        ]  # delete the sampled ones
+        subset_min = 1.0e6
+        # evaluate the plans
+        for rand_plan in rand_plans_list:
+            delay = get_delay_of_discrete_plan(rand_plan, run_df)
+            subset_min = min(subset_min, delay)
+            opt_stats.add_eval_info(rand_plan, delay)
+
+        if subset_min <= best_delay_so_far:
+            best_delay_so_far = subset_min
+        else:
+            break
+
+    print(opt_stats.history_min_delays)
+    print("--------- end iteration -----------")
+
+    return opt_stats.history_min_delays

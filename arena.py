@@ -120,18 +120,24 @@ def get_delay_of_continuous(line_flow, line_service, continuous_vector, run_df=N
     assign_plan = get_closest_discrete_from_continuous(
         line_flow, line_service, continuous_vector
     )
+    delay = get_delay_of_discrete_plan(assign_plan, run_df)
+    return assign_plan, delay
+
+
+def get_delay_of_discrete_plan(assign_plan, run_df=None):
     if run_df is None:  # no cache, directly simulate
+        return None
         pass  # TODO
     else:
         assign_plan_str = str(assign_plan)
         query_str = "assign_plan_str==@assign_plan_str"
         df = run_df.query(query_str)
         if df.empty:
-            return None, None
+            return None
         else:
             df = df.iloc[0, :]
             delay = df["delay_seq"][-1]
-            return assign_plan, delay
+            return delay
 
 
 def cal_berth_f_rho_for_each_plan(assign_plan, line_flow, line_service):
@@ -222,6 +228,48 @@ def get_run_df_from_near_stop_db(stop_setting, signal_setting):
     run_df = sacred_to_df(db.runs).query(query)
 
     return run_df
+
+
+def get_case_df_from_db(stop_setting, signal_setting, algorithm):
+    client = MongoClient("localhost", 27017)
+    db = client["numerical_case"]
+
+    (
+        queue_rule,
+        berth_num,
+        line_num,
+        total_flow,
+        arrival_type,
+        mean_service,
+        set_no,
+    ) = stop_setting
+
+    if signal_setting is None:
+        query = "algorithm==@algorithm and queue_rule==@queue_rule and berth_num=={} and line_num=={} and total_flow=={} and arrival_type==@arrival_type and mean_service=={} and set_no=={}".format(
+            berth_num, line_num, total_flow, mean_service, set_no,
+        )
+    else:
+        cycle_length, green_ratio, buffer_size = signal_setting
+        query = "algorithm==@algorithm and queue_rule==@queue_rule and berth_num=={} and line_num=={} and total_flow=={} and arrival_type==@arrival_type and mean_service=={} and set_no=={} and cycle_length=={} and green_ratio=={} and buffer_size=={}".format(
+            berth_num,
+            line_num,
+            total_flow,
+            mean_service,
+            set_no,
+            cycle_length,
+            green_ratio,
+            buffer_size,
+        )
+
+    if algorithm == "CNP":
+        appended_query_str = "and max_depth=={} and sample_num_of_each_region=={}".format(
+            5, 5
+        )
+        query = query + appended_query_str
+
+    case_df = sacred_to_df(db.runs).query(query)
+
+    return case_df
 
 
 if __name__ == "__main__":

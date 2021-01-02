@@ -2,6 +2,7 @@ from threading import main_thread
 import cvxpy as cp
 import numpy as np
 from line_profile import get_generated_line_info
+import math
 
 
 def get_closest_discrete_from_continuous(
@@ -57,7 +58,9 @@ def get_closest_discrete_from_continuous(
     for ln in range(line_num):
         one_line_for_all_berths_idx = range(ln * berth_num, (ln + 1) * berth_num, 1)
         for ln_berth_idx in one_line_for_all_berths_idx:
-            if x.value[ln_berth_idx, 0] == 1:
+            if x.value[ln_berth_idx, 0] == 1 or math.isclose(
+                x.value[ln_berth_idx, 0], 1.0, abs_tol=0.01
+            ):
                 assign_plan[ln] = ln_berth_idx - ln * berth_num
     return assign_plan
 
