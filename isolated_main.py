@@ -12,11 +12,11 @@ def config():
     # queue_rule = "LO-Out"
     queue_rule = "FO-Bus"
     berth_num = 2
-    line_num = 10
-    total_flow = 135  # buses/hr
+    line_num = 12
+    total_flow = 138  # buses/hr
     arrival_type = "Gaussian"
     mean_service = 25  # seconds
-    set_no = 1
+    set_no = 0
 
 
 def run(assign_plan_str):

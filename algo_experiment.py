@@ -44,8 +44,10 @@ def main(
     gloabl_min = get_global_min_delay(stop_setting, signal_setting)
 
     if algorithm == "Tan":
-        for radius in [0.05 * 1.5]:  # 0.05
-            for region_num in [16]:  # 24
+        for radius in [0.05 * 1.5]:  # 0.05 * 1.5
+            # for radius in [0.05]:
+            for region_num in [16]:  # 16
+                # for region_num in [24]:
                 algo_setting = (radius, region_num)
                 history_delays = apply_tan_algo(
                     algo_setting, stop_setting, signal_setting
@@ -53,9 +55,9 @@ def main(
                 norm_history_delays = [x / gloabl_min for x in history_delays]
                 algo_ex.info["norm_history_delays"] = norm_history_delays
     else:
-        for sim_budget in [100]:
+        for sim_budget in [200]:
             for max_depth in [5]:
-                for sample_num_of_each_region in [5]:
+                for sample_num_of_each_region in [8]:
                     algo_ex.info["sim_budget"] = sim_budget
                     algo_ex.info["max_depth"] = max_depth
                     algo_ex.info[

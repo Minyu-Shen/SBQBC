@@ -88,14 +88,14 @@ def generate_and_add_to_db():
     collection = db["line_profile"]
 
     berth_num = 2
-    line_num = 10
-    total_flow = 135
+    line_num = 12
+    total_flow = 138
     arrival_type = "Gaussian"
     mean_service = 25
-    arr_scale = 5  # larger scale, smaller variance of arrival flow mean
-    service_scale = 8  # larger scale, smaller variance of service mean
+    arr_scale = 6  # larger scale, smaller variance of arrival flow mean
+    service_scale = 12  # larger scale, smaller variance of service mean
 
-    for set_no in range(5):
+    for set_no in range(2):
         line_flow, line_service = generate_line_info(
             line_num,
             total_flow,

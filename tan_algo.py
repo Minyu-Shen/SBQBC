@@ -122,7 +122,7 @@ def apply_tan_algo(algo_setting, stop_setting, signal_setting=None):
         else:
             break
 
-    print(opt_stats.history_min_delays)
+    # print(opt_stats.history_min_delays)
     print("--------- end iteration -----------")
 
     return opt_stats.history_min_delays

@@ -121,6 +121,9 @@ def apply_cnp_algo(algo_setting, stop_setting, signal_setting=None):
                 opt_stats.add_eval_info(assign_plan, delay)
                 surrounding_sample_delays.append(delay)
 
+            # calculate promising index of surround region
+            surr_mean = sum(surrounding_sample_delays) / len(surrounding_sample_delays)
+
             if curr_promising_region.depth == max_depth - 1:  # at leaf node
                 # print("--------- at max depth -----------")
                 promising_sample_delays = []
@@ -133,7 +136,11 @@ def apply_cnp_algo(algo_setting, stop_setting, signal_setting=None):
                     promising_sample_delays.append(delay)
 
                 # compare indexs and see if trackback or not
+                promising_mean = sum(promising_sample_delays) / len(
+                    promising_sample_delays
+                )
                 if min(surrounding_sample_delays) < min(promising_sample_delays):
+                # if surr_mean < promising_mean:
                     opt_stats.curr_promising_region_id = (
                         curr_promising_region.parent.region_id
                     )
@@ -149,9 +156,10 @@ def apply_cnp_algo(algo_setting, stop_setting, signal_setting=None):
                     run_df,
                 )
                 best_child_region_id, best_delay_list = best_child_region_tuple
-                # print(child_region_sample_delays_dict)
-                # print(best_child_region_id, best_delay_list)
+                best_child_mean = sum(best_delay_list) / len(best_delay_list)
+
                 if min(surrounding_sample_delays) < min(best_delay_list):
+                # if surr_mean < best_child_mean:
                     opt_stats.curr_promising_region_id = (
                         curr_promising_region.parent.region_id
                     )

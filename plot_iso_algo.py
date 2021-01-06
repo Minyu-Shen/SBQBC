@@ -12,14 +12,7 @@ line_num = 10
 total_flow = 135
 arrival_type = "Gaussian"
 mean_service = 25
-cycle_length = 120
-green_ratio = 0.5
-buffer_size = 3
 
-### cnp algorithm setting
-sim_budget = 100
-max_depth = 5  # must >= 3
-sample_num_of_each_region = 3
 ### figure setting
 line_styles_dict = {"FIFO": "solid", "LO-Out": "dashed", "FO-Bus": "dotted"}
 line_colors = ["#ff1654", "#0a1128"]
@@ -38,7 +31,7 @@ for queue_rule in ["FIFO", "LO-Out", "FO-Bus"]:
         y_label="searched minimum/ global minimum",
     )
     ### signal setting
-    # signal_setting = None
+    signal_setting = None
     signal_setting = (120, 0.5, 3)
 
     for set_no in [1]:
@@ -68,8 +61,9 @@ for queue_rule in ["FIFO", "LO-Out", "FO-Bus"]:
 
         ### plot
         ax.set_xticks(x_ticks)
-        ax.set_ylim([1, 1.5])
-        ax.set_xlim([1, x_range])
+        ax.set_ylim([1, 1.3])
+        # ax.set_xlim([1, x_range])
+        ax.set_xlim([1, 150])
         ax.plot(
             x_tan,
             tan_norm_history_delays,
