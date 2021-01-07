@@ -8,7 +8,7 @@ def get_curve_plot(x_label, y_label):
     fig, ax = plt.subplots()
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
-    ax.grid(linestyle="dashed")
+    ax.grid(linestyle="-.", alpha=0.4)
 
     return fig, ax
 

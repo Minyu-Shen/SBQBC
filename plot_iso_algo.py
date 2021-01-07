@@ -15,9 +15,9 @@ mean_service = 25
 
 ### figure setting
 line_styles_dict = {"FIFO": "solid", "LO-Out": "dashed", "FO-Bus": "dotted"}
-line_colors = ["#ff1654", "#0a1128"]
 
-algo_line_colors_dict = {"Tan": "#ff1654", "CNP": "#0a1128"}
+# algo_line_colors_dict = {"Tan": "#ff1654", "CNP": "#0a1128"}
+algo_line_colors_dict = {"Tan": "blue", "CNP": "black"}
 setno_styles_dict = {0: "solid", 1: "dashed", 2: "dotted"}
 
 
@@ -32,9 +32,9 @@ for queue_rule in ["FIFO", "LO-Out", "FO-Bus"]:
     )
     ### signal setting
     signal_setting = None
-    signal_setting = (120, 0.5, 3)
+    # signal_setting = (120, 0.5, 3)
 
-    for set_no in [1]:
+    for set_no in [1, 2]:
         # line_color = line_colors[set_no]  # one color for one set_no
         ### stop_setting
         stop_setting = (
@@ -61,23 +61,44 @@ for queue_rule in ["FIFO", "LO-Out", "FO-Bus"]:
 
         ### plot
         ax.set_xticks(x_ticks)
-        ax.set_ylim([1, 1.3])
+        ax.set_ylim([1, 1.5])
         # ax.set_xlim([1, x_range])
-        ax.set_xlim([1, 150])
+        ax.set_xlim([-1, 120])
         ax.plot(
             x_tan,
             tan_norm_history_delays,
             color=algo_line_colors_dict["Tan"],
             linestyle=setno_styles_dict[set_no],
+            linewidth=1.5,
         )
         ax.plot(
             x_cnp,
             cnp_norm_history_delays,
             color=algo_line_colors_dict["CNP"],
             linestyle=setno_styles_dict[set_no],
+            linewidth=1.5,
         )
         line_flow, line_service, line_rho = get_generated_line_info(
             berth_num, line_num, total_flow, arrival_type, mean_service, set_no
+        )
+        # annotating simple policy
+        ax.annotate(
+            "simple policy",
+            xy=(1, cnp_norm_history_delays[0]),
+            xytext=(60, 1.2),
+            size=12,
+            va="center",
+            ha="center",
+            bbox=dict(boxstyle="round4", fc="w"),
+            arrowprops=dict(
+                arrowstyle="->",
+                connectionstyle="arc3,rad=0.0",
+                relpos=(1.0, 0.0),
+                fc="w",
+            ),
+        )
+        ax.plot(
+            x_cnp[0], cnp_norm_history_delays[0], "rD",
         )
 
     if signal_setting is not None:

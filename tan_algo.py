@@ -80,6 +80,11 @@ def apply_tan_algo(algo_setting, stop_setting, signal_setting=None):
                 subset_plans_dict[center].append(plan)
                 break
 
+    # keys = list(subset_plans_dict.keys())
+    # random.shuffle(keys)
+    # shuffled_subset_plans_dict = {key: subset_plans_dict[key] for key in keys}
+    shuffled_subset_plans_dict = subset_plans_dict
+
     # for subset_center, plans in subset_plans_dict.items():
     #     print(subset_center, " : ", len(plans))
 
@@ -88,7 +93,7 @@ def apply_tan_algo(algo_setting, stop_setting, signal_setting=None):
     best_delay_so_far = 1.0e6
     ### get a general view, i.e, sample 5 for each subset
     subset_delay_metric = {}
-    for subset_center, plans in subset_plans_dict.items():
+    for subset_center, plans in shuffled_subset_plans_dict.items():
         # if the set no. is smallert than 5, no need to look at it
         if len(plans) < sample_no:
             continue

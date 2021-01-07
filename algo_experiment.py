@@ -57,7 +57,7 @@ def main(
     else:
         for sim_budget in [200]:
             for max_depth in [5]:
-                for sample_num_of_each_region in [8]:
+                for sample_num_of_each_region in [5]:
                     algo_ex.info["sim_budget"] = sim_budget
                     algo_ex.info["max_depth"] = max_depth
                     algo_ex.info[

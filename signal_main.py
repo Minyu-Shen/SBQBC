@@ -12,14 +12,14 @@ def config():
     # queue_rule = "LO-Out"
     queue_rule = "FO-Bus"
     berth_num = 2
-    line_num = 12
-    total_flow = 138  # buses/hr
+    line_num = 10
+    total_flow = 135  # buses/hr
     arrival_type = "Gaussian"
     mean_service = 25  # seconds
     cycle_length = 120
     green_ratio = 0.5
     buffer_size = 3
-    set_no = 0  # which set of input profile in the database
+    set_no = 2  # which set of input profile in the database
 
 
 def run(assign_plan_str):
