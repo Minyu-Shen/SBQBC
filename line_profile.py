@@ -149,5 +149,61 @@ def generate_and_add_to_db():
         # plt.show()
 
 
+def add_CHT_to_db():
+    client = MongoClient("localhost", 27017)
+    db = client["inputs"]
+    collection = db["line_profile"]
+
+    berth_num = 4
+    line_num = 16
+    total_flow = None
+    arrival_type = "Gaussian"
+    mean_service = 25
+    arr_scale = 4  # larger scale, smaller variance of arrival flow mean
+    service_scale = 4  # larger scale, smaller variance of service mean
+
+    arr_flows = [8, 2, 2, 6, 6, 2, 2, 1, 4, 1, 1, 4, 5, 1, 1, 1]
+    arr_flows = [x / (45 / 60) for x in arr_flows]
+    service_means = [
+        40.0,
+        52.0,
+        61.0,
+        40.0,
+        68.3,
+        64.0,
+        49.0,
+        80.0,
+        24.25,
+        77.0,
+        63.0,
+        31.0,
+        60.0,
+        44.0,
+        34.0,
+        25.0,
+    ]
+
+    line_flow = {}
+    line_service = {}
+    for i in range(line_num):
+        arr_cv = np.random.uniform(0.4, 0.8)
+        service_cv = np.random.uniform(0.4, 0.8)
+        line_flow[str(i)] = (arr_flows[i], arr_cv, arrival_type)
+        line_service[str(i)] = (service_means[i], service_cv)
+
+    json_dict = {}
+    json_dict["berth_num"] = berth_num
+    json_dict["line_num"] = line_num
+    json_dict["set_no"] = None
+    json_dict["total_flow"] = None
+    json_dict["arrival_type"] = arrival_type
+    json_dict["mean_service"] = None
+    json_dict["line_flow"] = line_flow
+    json_dict["line_service"] = line_service
+
+    collection.insert_one(json_dict)
+
+
 if __name__ == "__main__":
-    generate_and_add_to_db()
+    add_CHT_to_db()
+    # generate_and_add_to_db()

@@ -1,7 +1,7 @@
 from numpy import random
+from sim_results import get_delay_of_discrete_plan
 from arena import (
     cal_berth_f_rho_for_each_plan,
-    get_delay_of_discrete_plan,
     get_run_df_from_db,
     get_run_df_from_near_stop_db,
     assign_plan_enumerator,

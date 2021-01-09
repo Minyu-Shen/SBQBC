@@ -1,12 +1,12 @@
 import matplotlib.pyplot as plt
 import math
 import numpy as np
-from itertools import product
+from itertools import product, repeat
 from collections import defaultdict
 import ast
 from pymongo import MongoClient
 from sacred_to_df import sacred_to_df
-from miqp import get_closest_discrete_from_continuous
+import random
 
 
 def plot_time_space(berth_num, total_buses, duration, sim_delta, stop):
@@ -88,6 +88,12 @@ def assign_plan_enumerator(line_num, berth_num):
             yield {l: roll[l] for l in range(line_num)}
 
 
+def random_assign_plan_enumerator(line_num, berth_num, sample_num=2000):
+    berths = [i for i in range(berth_num)]
+    for roll in range(sample_num):
+        yield {l: random.choice(berths) for l in range(line_num)}
+
+
 def make_assign_plan(line_num, berth_num, flow_infos, service_infos):
     berths = [i for i in range(berth_num)]
     plans = []
@@ -113,31 +119,6 @@ def make_assign_plan(line_num, berth_num, flow_infos, service_infos):
 #         berth_rho_dict[berth] += arr_mean * serv_mean
 
 #     return berth_rho_dict
-
-
-def get_delay_of_continuous(line_flow, line_service, continuous_vector, run_df=None):
-    # find the closest discrete assignment plan
-    assign_plan = get_closest_discrete_from_continuous(
-        line_flow, line_service, continuous_vector
-    )
-    delay = get_delay_of_discrete_plan(assign_plan, run_df)
-    return assign_plan, delay
-
-
-def get_delay_of_discrete_plan(assign_plan, run_df=None):
-    if run_df is None:  # no cache, directly simulate
-        return None
-        pass  # TODO
-    else:
-        assign_plan_str = str(assign_plan)
-        query_str = "assign_plan_str==@assign_plan_str"
-        df = run_df.query(query_str)
-        if df.empty:
-            return None
-        else:
-            df = df.iloc[0, :]
-            delay = df["delay_seq"][-1]
-            return delay
 
 
 def cal_berth_f_rho_for_each_plan(assign_plan, line_flow, line_service):
@@ -274,6 +255,12 @@ def get_case_df_from_db(stop_setting, signal_setting, algorithm):
 
 if __name__ == "__main__":
     # samples = uniform_sample_from_unit_simplex(5000, 3)
-
-    for i in assign_plan_enumerator(line_num=3, berth_num=2):
+    a = random_assign_plan_enumerator(16, 4, 2)
+    for i in a:
         print(i)
+
+    # b = random_combination(a, 2)
+    # print(b)
+
+    # for i in assign_plan_enumerator(line_num=3, berth_num=2):
+    #     print(i)

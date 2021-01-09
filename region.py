@@ -2,7 +2,8 @@ import numpy as np
 import itertools
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon, LineString
-from arena import uniform_sample_from_unit_simplex, get_delay_of_continuous
+from arena import uniform_sample_from_unit_simplex
+from sim_results import get_delay_of_continuous
 from operator import attrgetter
 import matplotlib.pyplot as plt
 from collections import defaultdict
@@ -24,13 +25,19 @@ class Region(object):
         self.pre_sample_size = 200
 
     def evaluate_children_return_best(
-        self, sample_num_of_each_region, line_flow, line_service, opt_stats, run_df=None
+        self,
+        sample_num_of_each_region,
+        line_flow,
+        line_service,
+        opt_stats,
+        run_df=None,
+        sim_info=None,
     ):
         child_region_sample_delays_dict = defaultdict(list)
         for child_region in self.children:
             for _ in range(sample_num_of_each_region):
                 assign_plan, delay = self.sample_one_plan(
-                    line_flow, line_service, run_df
+                    line_flow, line_service, run_df, sim_info
                 )
                 opt_stats.add_eval_info(assign_plan, delay)
                 child_region_sample_delays_dict[child_region.region_id].append(delay)
@@ -51,14 +58,42 @@ class Region(object):
     def is_pre_sample_enough(self):
         return True if len(self.pre_sample_points) >= self.pre_sample_size else False
 
-    def sample_one_plan(self, line_flow, line_service, run_df=None):
+    def sample_one_plan(self, line_flow, line_service, run_df=None, sim_info=None):
         while True:
             continuous_vector = self.pre_sample_points.pop()
             assign_plan, delay = get_delay_of_continuous(
-                line_flow, line_service, continuous_vector, run_df
+                line_flow, line_service, continuous_vector, run_df, sim_info
             )
             if assign_plan is not None:
                 return assign_plan, delay
+
+    def dispatch_point_to_children(self):
+        if len(self.children) != 0:
+            dspt_num = len(self.pre_sample_points) - 400  # keep 200 for self
+            for _ in range(dspt_num):
+                point = self.pre_sample_points.pop()
+                ### get the region with min distance
+                child_dist_sum_dict = {r: 0.0 for r in self.children}
+
+                for r in self.children:
+                    center = [0] * self.dim
+                    for each_vertex in r.vertexs:
+                        for each_dim in range(self.dim):
+                            center[each_dim] += each_vertex[each_dim]
+                    center = [x / self.dim for x in center]
+                    to_center_dist_sum = 0.0
+                    for d in range(self.dim):
+                        to_center_dist_sum += abs(center[d] - point[d])
+                        child_dist_sum_dict[r] = to_center_dist_sum
+
+                    # surr_sum = 0.0
+                    # for each_vertex in r.vertexs:
+                    #     for d in range(self.dim):
+                    #         surr_sum += abs(each_vertex[d] - point[d])
+                    # child_dist_sum_dict[r] = surr_sum
+
+                min_region = min(child_dist_sum_dict, key=child_dist_sum_dict.get)
+                min_region.pre_sample_points.append(point)
 
     def add_pre_sample_point(self, point):
         """ add pre-sampled point into property
@@ -66,11 +101,11 @@ class Region(object):
         """
         if self.is_point_in_region(point):
             self.pre_sample_points.append(point)
-            return True
-        else:
-            return False
+            # return True
+        # else:
+        # return False
 
-    def is_point_in_region(self, point):
+    def is_point_in_region(self, point, by="distance"):
         """ 
         point -- a tuple of point
         """
@@ -80,11 +115,26 @@ class Region(object):
             line = LineString(self.vertexs)
             assert line.is_valid, "line defined by self.vertexs should be valid"
             return True if line.contains(p_point) else False
-        else:  # construct a polygon
+        elif self.dim == 3:  # construct a polygon
             p_point = Point(point)
             polygon = Polygon(self.vertexs)
             assert polygon.is_valid, "polygon defined by self.vertexs should be valid"
             return True if polygon.contains(p_point) else False
+        else:  # based on distance
+            if self.region_id == 0:  # the root region
+                return True
+            else:
+                # return True
+                all_regions_same_depth = self.parent.children
+                surr_sum_dict = {r.region_id: 0.0 for r in all_regions_same_depth}
+                for r in all_regions_same_depth:
+                    surr_sum = 0.0
+                    for each_vertex in r.vertexs:
+                        for d in range(self.dim):
+                            surr_sum += (each_vertex[d] - point[d]) ** 2
+                    surr_sum_dict[r.region_id] = surr_sum
+                min_region_id = min(surr_sum_dict, key=surr_sum_dict.get)
+                return True if min_region_id == self.region_id else False
 
     def add_child(self, child):
         child.parent = self
@@ -164,24 +214,32 @@ def build_region_tree(dim, max_depth):
                 parent_region.add_child(sub_region)
             total_region_list.extend(sub_regions)
 
-    # start uniform pre-sampling and add to property
-    while True:
-        a = False
+    total_num = 0
+    for d in range(1, max_depth + 1, 1):
+        total_num += dim ** (d - 1)
+    total_num = total_num * 801
+    for _ in range(total_num):
         one_sample = uniform_sample_from_unit_simplex(size=1, dim=dim)
         one_sample_tuple = tuple(one_sample)
-        # print(one_sample_tuple)
-        for region in total_region_list:
-            if region.is_pre_sample_enough():
-                continue  # search check next region
-            if region.add_pre_sample_point(one_sample_tuple):
-                # print(region.region_id)
-                break
+        total_region_list[0].add_pre_sample_point(one_sample_tuple)
+    # total_region_list[0].dispatch_point_to_children()
+    for region in total_region_list:
+        print(region.region_id, len(region.pre_sample_points))
+        region.dispatch_point_to_children()
 
-        for region in total_region_list:
-            if not region.is_pre_sample_enough():
-                break
-        else:
-            break  # break the while True loop
+    # for region in total_region_list:
+    #     while True:
+    #         one_sample = uniform_sample_from_unit_simplex(size=1, dim=dim)
+    #         one_sample_tuple = tuple(one_sample)
+    #         region.add_pre_sample_point(one_sample_tuple)
+    #         if region.is_pre_sample_enough():
+    #             break  # search check next region
+
+    # for region in total_region_list:
+    #     if not region.is_pre_sample_enough():
+    #         break
+    # else:
+    #         break  # break the while True loop
 
     # for region in total_region_list:
     #     print(region.is_pre_sample_enough())
@@ -198,7 +256,7 @@ if __name__ == "__main__":
     # print(line.contains(point))
 
     berth_num = 3
-    max_depth = 3  # root region is located at depth-0
+    max_depth = 4  # root region is located at depth-0
     total_region_list = build_region_tree(dim=berth_num, max_depth=max_depth)
     root_region = total_region_list[0]
     root_region.print_tree()
@@ -208,27 +266,25 @@ if __name__ == "__main__":
     # line_flow, line_service, line_rho = get_generated_line_info(
     #     berth_num, 6, 135, "Gaussian", 25, 0
     # )
-    regions_at_max_depth = [
-        region for region in total_region_list if region.depth == max_depth - 1
-    ]
+    # regions_at_max_depth = [
+    #     region for region in total_region_list if region.depth == max_depth - 1
+    # ]
     # evenest_point = [sum(line_rho.values()) / berth_num] * berth_num
-    evenest_point = [1.0 / berth_num] * berth_num
-    # print(evenest_point)
-    for region in regions_at_max_depth:
-        is_contain = region.is_point_in_region(evenest_point)
-        print(is_contain, region.vertexs)
+    # evenest_point = [1.0 / berth_num] * berth_num
+    # # print(evenest_point)
+    # for region in regions_at_max_depth:
+    #     is_contain = region.is_point_in_region(evenest_point)
+    # print(is_contain, region.vertexs)
 
     fig, ax = plt.subplots()
-    samples = total_region_list[10].pre_sample_points
+    samples = total_region_list[23].pre_sample_points
     x, y, z = zip(*samples)
     ax.scatter(x, y, c="r")
-    samples = total_region_list[11].pre_sample_points
+    samples = total_region_list[24].pre_sample_points
     x, y, z = zip(*samples)
     ax.scatter(x, y, c="g")
-    samples = total_region_list[12].pre_sample_points
+    samples = total_region_list[22].pre_sample_points
     x, y, z = zip(*samples)
     ax.scatter(x, y, c="b")
-    # samples = total_region_list[6].pre_sample_points
-    # x, y = zip(*samples)
-    # ax.scatter(x, y, c="k")
+
     fig.savefig("figs/pre_sample_test.jpg")

@@ -1,7 +1,7 @@
 from numpy import random
+from sim_results import get_delay_of_continuous
 from arena import (
     cal_berth_f_rho_for_each_plan,
-    get_delay_of_continuous,
     get_run_df_from_db,
     get_run_df_from_near_stop_db,
 )
@@ -56,10 +56,22 @@ def apply_cnp_algo(algo_setting, stop_setting, signal_setting=None):
     line_flow, line_service, line_rho = get_generated_line_info(
         berth_num, line_num, total_flow, arrival_type, mean_service, set_no
     )
+    sim_info = {
+        "queue_rule": queue_rule,
+        "berth_num": berth_num,
+        "line_flow": line_flow,
+        "line_service": line_service,
+        "signal": None,
+    }
     if signal_setting is None:
         run_df = get_run_df_from_db(stop_setting)
     else:
         cycle_length, green_ratio, buffer_size = signal_setting
+        sim_info["signal"] = {
+            "cycle_length": cycle_length,
+            "green_ratio": green_ratio,
+            "buffer_size": buffer_size,
+        }
         run_df = get_run_df_from_near_stop_db(stop_setting, signal_setting)
 
     ### find start point and its located region of maximum depth
@@ -70,8 +82,9 @@ def apply_cnp_algo(algo_setting, stop_setting, signal_setting=None):
     ]
     total_rho = sum(line_rho.values())
     evenest_point = [total_rho / berth_num] * berth_num
+
     assign_plan, delay = get_delay_of_continuous(
-        line_flow, line_service, evenest_point, run_df
+        line_flow, line_service, evenest_point, run_df, sim_info
     )
     berth_flow, berth_rho = cal_berth_f_rho_for_each_plan(
         assign_plan, line_flow, line_service
@@ -99,7 +112,12 @@ def apply_cnp_algo(algo_setting, stop_setting, signal_setting=None):
         if curr_promising_region.depth == 0:  # at root node
             # print("--------- at root -----------")
             best_child_region_tuple = curr_promising_region.evaluate_children_return_best(
-                sample_num_of_each_region, line_flow, line_service, opt_stats, run_df
+                sample_num_of_each_region,
+                line_flow,
+                line_service,
+                opt_stats,
+                run_df,
+                sim_info,
             )
             best_child_region_id, best_delay_list = best_child_region_tuple
             opt_stats.curr_promising_region_id = best_child_region_id
@@ -140,7 +158,7 @@ def apply_cnp_algo(algo_setting, stop_setting, signal_setting=None):
                     promising_sample_delays
                 )
                 if min(surrounding_sample_delays) < min(promising_sample_delays):
-                # if surr_mean < promising_mean:
+                    # if surr_mean < promising_mean:
                     opt_stats.curr_promising_region_id = (
                         curr_promising_region.parent.region_id
                     )
@@ -154,12 +172,13 @@ def apply_cnp_algo(algo_setting, stop_setting, signal_setting=None):
                     line_service,
                     opt_stats,
                     run_df,
+                    sim_info,
                 )
                 best_child_region_id, best_delay_list = best_child_region_tuple
                 best_child_mean = sum(best_delay_list) / len(best_delay_list)
 
                 if min(surrounding_sample_delays) < min(best_delay_list):
-                # if surr_mean < best_child_mean:
+                    # if surr_mean < best_child_mean:
                     opt_stats.curr_promising_region_id = (
                         curr_promising_region.parent.region_id
                     )
