@@ -149,40 +149,76 @@ def generate_and_add_to_db():
         # plt.show()
 
 
-def add_CHT_to_db():
+def add_CHT_to_db(line_num=19):
     client = MongoClient("localhost", 27017)
     db = client["inputs"]
     collection = db["line_profile"]
 
     berth_num = 4
-    line_num = 16
-    total_flow = None
     arrival_type = "Gaussian"
-    mean_service = 25
-    arr_scale = 4  # larger scale, smaller variance of arrival flow mean
-    service_scale = 4  # larger scale, smaller variance of service mean
-
-    arr_flows = [8, 2, 2, 6, 6, 2, 2, 1, 4, 1, 1, 4, 5, 1, 1, 1]
+    # arr_scale = 4  # larger scale, smaller variance of arrival flow mean
+    # service_scale = 4  # larger scale, smaller variance of service mean
+    if line_num == 16:
+        # arr_flows = [8, 2, 2, 6, 6, 2, 2, 1, 4, 1, 1, 4, 5, 1, 1, 1]
+        arr_flows = [8, 2, 2, 6, 6, 2, 2, 1, 4, 1, 1, 4, 5, 1, 1, 1]
+        service_means = [
+            40.0,
+            52.0,
+            61.0,
+            40.0,
+            68.3,
+            64.0,
+            49.0,
+            80.0,
+            24.25,
+            77.0,
+            63.0,
+            31.0,
+            60.0,
+            44.0,
+            34.0,
+            25.0,
+        ]
+    elif line_num == 19:
+        arr_flows = [8, 8, 2, 11, 6, 6, 2, 2, 3, 4, 14, 1, 4, 5, 2, 10, 1, 8, 1]
+        service_means = [
+            40.0,
+            50.75,
+            52.0,
+            84.8,
+            40.0,
+            68.33,
+            64.0,
+            49.0,
+            76.0,
+            24.25,
+            58.43,
+            63.0,
+            31.25,
+            60.2,
+            52.5,
+            58.6,
+            34.0,
+            56.29,
+            25.0,
+        ]
+    else:
+        arr_flows = [12, 2, 7, 7, 3, 3, 7, 2, 4, 9, 3, 3]
+        service_means = [
+            38.67,
+            52.0,
+            38.71,
+            67.0,
+            53.67,
+            59.67,
+            25.14,
+            46.0,
+            31.25,
+            53.11,
+            23.33,
+            26.33,
+        ]
     arr_flows = [x / (45 / 60) for x in arr_flows]
-    service_means = [
-        40.0,
-        52.0,
-        61.0,
-        40.0,
-        68.3,
-        64.0,
-        49.0,
-        80.0,
-        24.25,
-        77.0,
-        63.0,
-        31.0,
-        60.0,
-        44.0,
-        34.0,
-        25.0,
-    ]
-
     line_flow = {}
     line_service = {}
     for i in range(line_num):
@@ -203,7 +239,22 @@ def add_CHT_to_db():
 
     collection.insert_one(json_dict)
 
+    # line_berth_plan = {
+    #     "101": "b",
+    #     "103": "d",
+    #     "106": "b",
+    #     "107": "c",
+    #     "108": "c",
+    #     "109": "d",
+    #     "111": "b",
+    #     "113": "d",
+    #     "115": "b",
+    #     "116": "c",
+    #     "170": "e",
+    #     "182": "e",
+    # }
+
 
 if __name__ == "__main__":
-    add_CHT_to_db()
+    add_CHT_to_db(line_num=12)
     # generate_and_add_to_db()

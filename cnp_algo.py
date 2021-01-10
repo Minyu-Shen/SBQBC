@@ -134,7 +134,7 @@ def apply_cnp_algo(algo_setting, stop_setting, signal_setting=None):
                 # uniformly select one surrounding region
                 sampled_region = random.choice(surrounding_region_list)
                 assign_plan, delay = sampled_region.sample_one_plan(
-                    line_flow, line_service, run_df
+                    line_flow, line_service, run_df, sim_info
                 )
                 opt_stats.add_eval_info(assign_plan, delay)
                 surrounding_sample_delays.append(delay)
@@ -148,7 +148,7 @@ def apply_cnp_algo(algo_setting, stop_setting, signal_setting=None):
                 # further explore promising region
                 for _ in range(sample_num_of_each_region):
                     assign_plan, delay = curr_promising_region.sample_one_plan(
-                        line_flow, line_service, run_df
+                        line_flow, line_service, run_df, sim_info
                     )
                     opt_stats.add_eval_info(assign_plan, delay)
                     promising_sample_delays.append(delay)

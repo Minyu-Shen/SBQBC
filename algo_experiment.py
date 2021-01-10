@@ -55,9 +55,9 @@ def main(
                 norm_history_delays = [x / gloabl_min for x in history_delays]
                 algo_ex.info["norm_history_delays"] = norm_history_delays
     else:
-        for sim_budget in [200]:
-            for max_depth in [5]:
-                for sample_num_of_each_region in [5]:
+        for sim_budget in [100]:
+            for max_depth in [4]:
+                for sample_num_of_each_region in [6]:
                     algo_ex.info["sim_budget"] = sim_budget
                     algo_ex.info["max_depth"] = max_depth
                     algo_ex.info[

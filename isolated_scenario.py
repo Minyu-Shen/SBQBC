@@ -11,7 +11,7 @@ def sim_one_isolated_scenario(*args):
     ######## hyper-parameters ########
     max_tolerance_delay = paras.max_tolerance_delay  # seconds
     each_eval_interval = 3600 * 10
-    total_eval_num = 500  # 600
+    total_eval_num = 400  # 600
     epoch_num = each_eval_interval * total_eval_num  # the total number of epochs
 
     minimum_eval_num = 150  # 150

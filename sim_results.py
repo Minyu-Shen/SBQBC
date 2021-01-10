@@ -17,7 +17,7 @@ def get_delay_of_continuous(
 def get_delay_of_discrete_plan(assign_plan, run_df, sim_info=None):
     if run_df is None or run_df.empty:  # no cache, directly simulate
         if sim_info["signal"] == None:
-            delay = sim_one_isolated_scenario(
+            delay_seq = sim_one_isolated_scenario(
                 sim_info["queue_rule"],
                 sim_info["berth_num"],
                 sim_info["line_flow"],
@@ -25,7 +25,10 @@ def get_delay_of_discrete_plan(assign_plan, run_df, sim_info=None):
                 False,
                 assign_plan,
             )
-            return delay
+            return delay_seq[-1]
+        else:
+            pass
+            # TODO
     else:
         assign_plan_str = str(assign_plan)
         query_str = "assign_plan_str==@assign_plan_str"

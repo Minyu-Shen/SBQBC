@@ -74,7 +74,8 @@ def apply_tan_algo(algo_setting, stop_setting, signal_setting=None):
     for plan in enumerator:
         berth_flow, _ = cal_berth_f_rho_for_each_plan(plan, line_flow, line_service)
         ratio = berth_flow[1] / berth_flow[0]
-        for s in range(1, region_num + 1, 1):
+        # for s in range(1, region_num + 1, 1):
+        for s in range(region_num, 0, -1):
             center = s * 2 * radius - radius
             if abs(ratio - center) < radius:
                 subset_plans_dict[center].append(plan)

@@ -214,26 +214,28 @@ def build_region_tree(dim, max_depth):
                 parent_region.add_child(sub_region)
             total_region_list.extend(sub_regions)
 
-    total_num = 0
-    for d in range(1, max_depth + 1, 1):
-        total_num += dim ** (d - 1)
-    total_num = total_num * 801
-    for _ in range(total_num):
-        one_sample = uniform_sample_from_unit_simplex(size=1, dim=dim)
-        one_sample_tuple = tuple(one_sample)
-        total_region_list[0].add_pre_sample_point(one_sample_tuple)
-    # total_region_list[0].dispatch_point_to_children()
-    for region in total_region_list:
-        print(region.region_id, len(region.pre_sample_points))
-        region.dispatch_point_to_children()
-
+    ### not optimal solution
+    # total_num = 0
+    # for d in range(1, max_depth + 1, 1):
+    #     total_num += dim ** (d - 1)
+    # total_num = total_num * 801
+    # for _ in range(total_num):
+    #     one_sample = uniform_sample_from_unit_simplex(size=1, dim=dim)
+    #     one_sample_tuple = tuple(one_sample)
+    #     total_region_list[0].add_pre_sample_point(one_sample_tuple)
+    # # total_region_list[0].dispatch_point_to_children()
     # for region in total_region_list:
-    #     while True:
-    #         one_sample = uniform_sample_from_unit_simplex(size=1, dim=dim)
-    #         one_sample_tuple = tuple(one_sample)
-    #         region.add_pre_sample_point(one_sample_tuple)
-    #         if region.is_pre_sample_enough():
-    #             break  # search check next region
+    #     # print(region.region_id, len(region.pre_sample_points))
+    #     region.dispatch_point_to_children()
+
+    ### optimal but not for c>3
+    for region in total_region_list:
+        while True:
+            one_sample = uniform_sample_from_unit_simplex(size=1, dim=dim)
+            one_sample_tuple = tuple(one_sample)
+            region.add_pre_sample_point(one_sample_tuple)
+            if region.is_pre_sample_enough():
+                break  # search check next region
 
     # for region in total_region_list:
     #     if not region.is_pre_sample_enough():

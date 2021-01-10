@@ -244,7 +244,7 @@ def get_case_df_from_db(stop_setting, signal_setting, algorithm):
 
     if algorithm == "CNP":
         appended_query_str = "and max_depth=={} and sample_num_of_each_region=={}".format(
-            5, 5
+            4, 6
         )
         query = query + appended_query_str
 
