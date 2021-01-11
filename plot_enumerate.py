@@ -11,7 +11,7 @@ total_flow = 135
 arrival_type = "Gaussian"
 mean_service = 25
 signal_setting = None
-# signal_setting = (120, 0.5, 3)
+signal_setting = (120, 0.5, 3)
 
 ### figure setting
 line_styles_dict = {"FIFO": "solid", "LO-Out": "dashed", "FO-Bus": "dotted"}
@@ -22,7 +22,7 @@ setno_styles_dict = {0: "solid", 1: "dashed", 2: "dotted"}
 setno_styles_dict = {0: "solid", 1: "dotted", 2: "dashed"}
 
 if signal_setting is None:
-    ann_text_pos = {"FIFO": (60, 1.1), "LO-Out": (60, 1.25), "FO-Bus": (70, 1.25)}
+    ann_text_pos = {"FIFO": (60, 1.07), "LO-Out": (50, 1.20), "FO-Bus": (60, 1.15)}
 else:
     ann_text_pos = {"FIFO": (60, 1.1), "LO-Out": (60, 1.25), "FO-Bus": (70, 1.15)}
 
@@ -72,7 +72,7 @@ for queue_rule in ["FIFO", "LO-Out", "FO-Bus"]:
             linewidth=1.5,
             label=tan_label,
         )
-        cnp_label = "CNP, line set-" + str(set_str_count)
+        cnp_label = "Proposed CNP, line set-" + str(set_str_count)
         ax.plot(
             x_cnp,
             cnp_norm_history_delays,
