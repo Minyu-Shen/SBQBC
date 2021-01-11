@@ -3,11 +3,11 @@ import numpy as np
 import matplotlib.tri as tri
 
 
-def get_curve_plot(x_label, y_label):
+def get_curve_plot(x_label, y_label, x_font, y_font):
     plt.rc("text", usetex=True)
     fig, ax = plt.subplots()
-    ax.set_xlabel(x_label)
-    ax.set_ylabel(y_label)
+    ax.set_xlabel(x_label, fontsize=x_font)
+    ax.set_ylabel(y_label, fontsize=y_font)
     ax.grid(linestyle="-.", alpha=0.4)
 
     return fig, ax

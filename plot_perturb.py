@@ -40,6 +40,8 @@ simple_delay = simple_df["simple_policy_delay"].values[0]
 fig, ax = get_curve_plot(
     x_label="Number of randomly-generated allocation plans",
     y_label="Average bus delay in desceding order",
+    x_font=13,
+    y_font=13,
 )
 
 ### set range
@@ -51,6 +53,7 @@ x_ticks.extend(list(np.arange(20, len(sorted_delays) + 1, 20)))
 # ax.set_ylim([1, 1.5])
 # # ax.set_xlim([1, x_range])
 ax.set_xticks(x_ticks)
+ax.tick_params(axis="both", which="major", labelsize=12)
 ax.set_xlim([1, 200])
 ax.plot(
     x,
@@ -67,7 +70,7 @@ ax.annotate(
     "simple policy",
     xy=(20, simple_delay),
     xytext=(100, simple_delay + 30),
-    size=12,
+    size=13,
     va="center",
     ha="center",
     bbox=dict(boxstyle="round4", fc="w"),

@@ -11,7 +11,7 @@ total_flow = 135
 arrival_type = "Gaussian"
 mean_service = 25
 signal_setting = None
-signal_setting = (120, 0.5, 3)
+# signal_setting = (120, 0.5, 3)
 
 ### figure setting
 line_styles_dict = {"FIFO": "solid", "LO-Out": "dashed", "FO-Bus": "dotted"}
@@ -22,16 +22,18 @@ setno_styles_dict = {0: "solid", 1: "dashed", 2: "dotted"}
 setno_styles_dict = {0: "solid", 1: "dotted", 2: "dashed"}
 
 if signal_setting is None:
-    ann_text_pos = {"FIFO": (60, 1.07), "LO-Out": (50, 1.20), "FO-Bus": (60, 1.15)}
+    ann_text_pos = {"FIFO": (60, 1.07), "LO-Out": (50, 1.20), "FO-Bus": (60, 1.13)}
 else:
-    ann_text_pos = {"FIFO": (60, 1.1), "LO-Out": (60, 1.25), "FO-Bus": (70, 1.15)}
+    ann_text_pos = {"FIFO": (60, 1.03), "LO-Out": (60, 1.25), "FO-Bus": (70, 1.08)}
 
 for queue_rule in ["FIFO", "LO-Out", "FO-Bus"]:
     ### generate figures for each queueing rule
     fig, ax = get_curve_plot(
         # x_label="simulaiton rounds", y_label="$\frac{delay}{global minima}$"
         x_label="Simulaiton rounds",
-        y_label="Searched minimum/ global minimum",
+        y_label="Searched minimum / global minimum",
+        x_font=14,
+        y_font=14,
     )
 
     y_max_lim = 0.0
@@ -62,6 +64,7 @@ for queue_rule in ["FIFO", "LO-Out", "FO-Bus"]:
         x_ticks.extend(list(np.arange(10, x_range, 10)))
         ax.set_xticks(x_ticks)
         ax.set_xlim([-1, 100])
+        ax.tick_params(axis="both", which="major", labelsize=13)
 
         tan_label = "Tan et al. (2014), line set-" + str(set_str_count)
         ax.plot(
@@ -89,7 +92,7 @@ for queue_rule in ["FIFO", "LO-Out", "FO-Bus"]:
             "simple policy",
             xy=(1, cnp_norm_history_delays[0]),
             xytext=ann_text_pos[queue_rule],
-            size=12,
+            size=14,
             va="center",
             ha="center",
             bbox=dict(boxstyle="round4", fc="w"),
@@ -103,7 +106,7 @@ for queue_rule in ["FIFO", "LO-Out", "FO-Bus"]:
         ax.plot(
             x_cnp[0], cnp_norm_history_delays[0], "rD",
         )
-        ax.legend()
+        ax.legend(fontsize=14)
         y_max_lim = max(cnp_norm_history_delays[0], y_max_lim)
         set_str_count += 1
 
