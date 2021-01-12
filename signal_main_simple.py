@@ -6,16 +6,12 @@ from sim_results import get_delay_of_continuous
 simple_ex = Experiment()
 
 if not simple_ex.observers:
-    simple_ex.observers.append(
-        MongoObserver(url="localhost:27017", db_name="perturb_stop")
-    )
+    simple_ex.observers.append(MongoObserver(url="localhost:27017", db_name="perturb_stop"))
 
 
 @simple_ex.config
 def config():
     seed = 1
-    # is_CNP = True  # True means using CNP, otherwise means perturbation
-
     # stop
     queue_rule = "FO-Bus"
     # queue_rule = "LO-Out"
@@ -36,7 +32,14 @@ def config():
     )
 
     # signal
-    signal_setting = None
+    cycle_length = 120
+    green_ratio = 0.5
+    buffer_size = 3
+    signal_setting = {
+        "cycle_length": cycle_length,
+        "green_ratio": green_ratio,
+        "buffer_size": buffer_size,
+    }
 
 
 @simple_ex.automain
@@ -59,7 +62,7 @@ def main(stop_setting, signal_setting):
         "berth_num": berth_num,
         "line_flow": line_flow,
         "line_service": line_service,
-        "signal": None,
+        "signal": signal_setting,
     }
     total_rho = sum(line_rho.values())
     evenest_point = [total_rho / berth_num] * berth_num

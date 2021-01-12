@@ -1,3 +1,4 @@
+from collections import deque
 from miqp import get_closest_discrete_from_continuous
 from isolated_scenario import sim_one_isolated_scenario
 from signal_scenario import sim_one_NS_scenario
@@ -27,8 +28,18 @@ def get_delay_of_discrete_plan(assign_plan, run_df, sim_info=None):
             )
             return delay_seq[-1]
         else:
-            pass
-            # TODO
+            delay_seq = sim_one_NS_scenario(
+                sim_info["berth_num"],
+                sim_info["queue_rule"],
+                sim_info["line_flow"],
+                sim_info["line_service"],
+                False,
+                sim_info["signal"]["buffer_size"],
+                sim_info["signal"]["cycle_length"],
+                sim_info["signal"]["green_ratio"],
+                assign_plan,
+            )
+            return delay_seq[-1]
     else:
         assign_plan_str = str(assign_plan)
         query_str = "assign_plan_str==@assign_plan_str"

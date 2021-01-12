@@ -1,10 +1,10 @@
 from sacred.observers import MongoObserver
 from concurrent import futures
 from arena import random_assign_plan_enumerator
-from experiment import ex
+from signal_experiment import signal_ex
 
 
-@ex.config
+@signal_ex.config
 def config():
     seed = 1
     queue_rule = "FO-Bus"
@@ -16,16 +16,17 @@ def config():
     mean_service = None
     set_no = None
     is_CNP = False  # True means using CNP, otherwise means perturbation
-
-    signal_setting = None
+    cycle_length = 120
+    green_ratio = 0.5
+    buffer_size = 3
 
 
 def run(assign_plan_str):
-    if not ex.observers:
-        ex.observers.append(
+    if not signal_ex.observers:
+        signal_ex.observers.append(
             MongoObserver(url="localhost:27017", db_name="perturb_stop")
         )
-    run = ex.run(config_updates={"assign_plan_str": assign_plan_str})
+    run = signal_ex.run(config_updates={"assign_plan_str": assign_plan_str})
 
 
 perturb_num = 500
