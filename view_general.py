@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 from arena import (
     cal_berth_f_rho_for_each_plan,
-    plot_contour_by_lists,
     get_run_df_from_db,
     get_run_df_from_near_stop_db,
 )
@@ -11,18 +10,18 @@ from hyper_parameters import max_tolerance_delay
 
 
 berth_num = 2
-line_num = 6
+line_num = 10
 total_flow = 135
 arrival_type = "Gaussian"
-# queue_rule = "LO-Out"
-queue_rule = "FIFO"
+queue_rule = "LO-Out"
+# queue_rule = "FIFO"
 mean_service = 25
 set_no = 0
 cycle_length = 140
 green_ratio = 0.5
 buffer_size = 4
 
-indicator = "flow"
+# indicator = "flow"
 indicator = "rho"
 
 stop_setting = (
@@ -36,7 +35,7 @@ stop_setting = (
 )
 signal_setting = (cycle_length, green_ratio, buffer_size)
 run_df = get_run_df_from_db(stop_setting)
-run_df = get_run_df_from_near_stop_db(stop_setting, signal_setting)
+# run_df = get_run_df_from_near_stop_db(stop_setting, signal_setting)
 
 line_flow, line_service, line_rho = get_generated_line_info(
     berth_num, line_num, total_flow, arrival_type, mean_service, set_no
@@ -50,7 +49,7 @@ for _, row in run_df.iterrows():
     )
     delay = row["delay_seq"][-1]
     # if delay < max_tolerance_delay:
-    if delay < 300.0:
+    if delay < 200.0:
         if indicator == "rho":
             x.append(berth_rho[0])
             y.append(berth_rho[1])
@@ -78,11 +77,14 @@ if berth_num == 2:
         + queue_rule
         + "_"
         + indicator
+        + "_set_"
+        + str(set_no)
         + "_general_view.jpg"
     )
     fig.savefig(fig_str)
 else:
-    fig = plot_contour_by_lists(x, y, z)
-    fig_str = "figs/3_berth_" + queue_rule + "_general_view.jpg"
-    fig.savefig(fig_str)
+    # fig = plot_contour_by_lists(x, y, z)
+    # fig_str = "figs/3_berth_" + queue_rule + "_general_view.jpg"
+    # fig.savefig(fig_str)
+    pass
 

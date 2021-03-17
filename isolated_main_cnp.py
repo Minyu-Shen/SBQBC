@@ -18,12 +18,12 @@ def config():
     is_CNP = True  # True means using CNP, otherwise means perturbation
 
     queue_rule = "FO-Bus"
-    berth_num = 4
-    line_num = 16
-    total_flow = None
+    berth_num = 2
+    line_num = 10
+    total_flow = 135
     arrival_type = "Gaussian"
-    mean_service = None
-    set_no = None
+    mean_service = 25
+    set_no = 0
     stop_setting = (
         queue_rule,
         berth_num,
@@ -38,9 +38,9 @@ def config():
     signal_setting = None
 
     # algorithm
-    sample_num_of_each_region = 1
-    max_depth = 3
-    sim_budget = 5
+    sample_num_of_each_region = 5
+    max_depth = 4
+    sim_budget = 100
     algo_setting = (sim_budget, max_depth, sample_num_of_each_region)
 
 
