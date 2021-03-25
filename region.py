@@ -7,6 +7,7 @@ from sim_results import get_delay_of_continuous
 from operator import attrgetter
 import matplotlib.pyplot as plt
 from collections import defaultdict
+import numpy.linalg as LA
 
 
 class Region(object):
@@ -101,6 +102,7 @@ class Region(object):
         """
         if self.is_point_in_region(point):
             self.pre_sample_points.append(point)
+
             # return True
         # else:
         # return False
@@ -110,31 +112,38 @@ class Region(object):
         point -- a tuple of point
         """
         assert len(point) == self.dim, "dimension is mismatched"
-        if self.dim == 2:  # construct a line
-            p_point = Point(point)
-            line = LineString(self.vertexs)
-            assert line.is_valid, "line defined by self.vertexs should be valid"
-            return True if line.contains(p_point) else False
-        elif self.dim == 3:  # construct a polygon
-            p_point = Point(point)
-            polygon = Polygon(self.vertexs)
-            assert polygon.is_valid, "polygon defined by self.vertexs should be valid"
-            return True if polygon.contains(p_point) else False
-        else:  # based on distance
-            if self.region_id == 0:  # the root region
-                return True
-            else:
-                # return True
-                all_regions_same_depth = self.parent.children
-                surr_sum_dict = {r.region_id: 0.0 for r in all_regions_same_depth}
-                for r in all_regions_same_depth:
-                    surr_sum = 0.0
-                    for each_vertex in r.vertexs:
-                        for d in range(self.dim):
-                            surr_sum += (each_vertex[d] - point[d]) ** 2
-                    surr_sum_dict[r.region_id] = surr_sum
-                min_region_id = min(surr_sum_dict, key=surr_sum_dict.get)
-                return True if min_region_id == self.region_id else False
+        A = [list(v) for v in self.vertexs]
+        A = np.array(A).T
+        b = np.array(point)
+        coefs = LA.solve(A, b)
+        return True if (coefs >= 0).all() else False
+
+        ### unused, for c<=3 only
+        # if self.dim == 2:  # construct a line
+        #     p_point = Point(point)
+        #     line = LineString(self.vertexs)
+        #     assert line.is_valid, "line defined by self.vertexs should be valid"
+        #     return True if line.contains(p_point) else False
+        # elif self.dim == 3:  # construct a polygon
+        #     p_point = Point(point)
+        #     polygon = Polygon(self.vertexs)
+        #     assert polygon.is_valid, "polygon defined by self.vertexs should be valid"
+        #     return True if polygon.contains(p_point) else False
+        # else:  # based on distance
+        #     if self.region_id == 0:  # the root region
+        #         return True
+        #     else:
+        #         # return True
+        #         all_regions_same_depth = self.parent.children
+        #         surr_sum_dict = {r.region_id: 0.0 for r in all_regions_same_depth}
+        #         for r in all_regions_same_depth:
+        #             surr_sum = 0.0
+        #             for each_vertex in r.vertexs:
+        #                 for d in range(self.dim):
+        #                     surr_sum += (each_vertex[d] - point[d]) ** 2
+        #             surr_sum_dict[r.region_id] = surr_sum
+        #         min_region_id = min(surr_sum_dict, key=surr_sum_dict.get)
+        #         return True if min_region_id == self.region_id else False
 
     def add_child(self, child):
         child.parent = self
@@ -237,17 +246,7 @@ def build_region_tree(dim, max_depth):
             if region.is_pre_sample_enough():
                 break  # search check next region
 
-    # for region in total_region_list:
-    #     if not region.is_pre_sample_enough():
-    #         break
-    # else:
-    #         break  # break the while True loop
-
-    # for region in total_region_list:
-    #     print(region.is_pre_sample_enough())
     # root_region.print_tree()
-
-    # return total_region_list[0]  # return the root_region
     return total_region_list
 
 
@@ -257,11 +256,12 @@ if __name__ == "__main__":
     # point = Point((0.5, 0.5))
     # print(line.contains(point))
 
-    berth_num = 3
-    max_depth = 4  # root region is located at depth-0
+    berth_num = 4
+    max_depth = 3  # root region is located at depth-0
     total_region_list = build_region_tree(dim=berth_num, max_depth=max_depth)
     root_region = total_region_list[0]
     root_region.print_tree()
+
     # min_distance = min(total_region_list, key=attrgetter("distance_to_center"))
     # print(min_distance.region_id)
 
@@ -278,15 +278,14 @@ if __name__ == "__main__":
     #     is_contain = region.is_point_in_region(evenest_point)
     # print(is_contain, region.vertexs)
 
-    fig, ax = plt.subplots()
-    samples = total_region_list[23].pre_sample_points
-    x, y, z = zip(*samples)
-    ax.scatter(x, y, c="r")
-    samples = total_region_list[24].pre_sample_points
-    x, y, z = zip(*samples)
-    ax.scatter(x, y, c="g")
-    samples = total_region_list[22].pre_sample_points
-    x, y, z = zip(*samples)
-    ax.scatter(x, y, c="b")
-
-    fig.savefig("figs/pre_sample_test.jpg")
+    # fig, ax = plt.subplots()
+    # samples = total_region_list[1].pre_sample_points
+    # x, y, z = zip(*samples)
+    # ax.scatter(x, y, c="r")
+    # samples = total_region_list[2].pre_sample_points
+    # x, y, z = zip(*samples)
+    # ax.scatter(x, y, c="g")
+    # samples = total_region_list[3].pre_sample_points
+    # x, y, z = zip(*samples)
+    # ax.scatter(x, y, c="b")
+    # fig.savefig("figs/pre_sample_test.jpg")

@@ -1,5 +1,39 @@
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
+import numpy.linalg as LA
+import numpy as np
+from scipy.optimize import linprog
+
+vertexs = [
+    (1.0, 0.0, 0.0),
+    (0.0, 1.0, 0.0),
+    (0.3333333333333333, 0.3333333333333333, 0.3333333333333333),
+]
+# vertexs = [
+#     (1.0, 0.0, 0.0),
+#     (0.3333333333333333, 0.3333333333333333, 0.3333333333333333),
+#     (0.0, 0.0, 1.0),
+# ]
+
+vertexs = [
+    (0.3333333333333333, 0.3333333333333333, 0.3333333333333333),
+    (0.0, 1.0, 0.0),
+    (0.0, 0.0, 1.0),
+]
+
+# vertexs = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)]
+
+A_list = [list(v) for v in vertexs]
+# A_list.append([1.0, 1.0, 1.0])
+A = np.array(A_list).T
+
+# b = np.array([0.1, 0.4, 0.5, 1.0])
+b = np.array([0.5, 0.4, 0.1])
+x = LA.solve(A, b)
+
+# x = linprog(c=[0.0, 0.0, 0.0], A_eq=A, b_eq=b, bounds=(0, None),)
+
+print(x, type(x), np.sum(x) == 1.0)
 
 # point = Point(1 / 3.0, 1 / 3.0, 1 / 3.0)
 # polygon = Polygon([[1, 0, 0], [0, 1, 0], [ 0, 0, 1 ]])
