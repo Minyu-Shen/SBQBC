@@ -65,6 +65,7 @@ class Region(object):
             assign_plan, delay = get_delay_of_continuous(
                 line_flow, line_service, continuous_vector, run_df, sim_info
             )
+            print("evaluated one plan's delay:", delay)
             if assign_plan is not None:
                 return assign_plan, delay
 

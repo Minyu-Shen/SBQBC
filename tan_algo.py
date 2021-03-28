@@ -33,7 +33,7 @@ def get_global_min_delay(stop_setting, signal_setting=None):
         run_df = get_run_df_from_db(stop_setting)
     else:
         run_df = get_run_df_from_near_stop_db(stop_setting, signal_setting)
-    run_df["final_delay"] = run_df.delay_seq.apply(lambda x: x[-1])
+    run_df["final_delay"] = run_df.delay_seq.apply(lambda x: x[-1] if type(x) is not float else 1000.0)
     return run_df["final_delay"].min().item()
 
 

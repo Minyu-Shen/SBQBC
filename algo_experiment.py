@@ -6,8 +6,8 @@ from tan_algo import apply_tan_algo, get_global_min_delay
 from sacred.observers import MongoObserver
 
 algo_ex = Experiment()
-# algo_ex.observers.append(MongoObserver(url="localhost:27017", db_name="numerical_case"))
-algo_ex.observers.append(MongoObserver(url="localhost:27017", db_name="ggg"))
+algo_ex.observers.append(MongoObserver(url="localhost:27017", db_name="numerical_case"))
+# algo_ex.observers.append(MongoObserver(url="localhost:27017", db_name="ggg"))
 
 
 @algo_ex.automain

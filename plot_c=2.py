@@ -14,7 +14,7 @@ signal_setting = None
 # signal_setting = (120, 0.5, 3)
 
 ### figure setting
-line_styles_dict = {"FIFO": "solid", "LO-Out": "dashed", "FO-Bus": "dotted"}
+line_styles_dict = {"FIFO": "solid", "LO-Out": "dashed", "FO-Free": "dotted"}
 
 # algo_line_colors_dict = {"Tan": "#ff1654", "CNP": "#0a1128"}
 algo_line_colors_dict = {"Tan": "black", "CNP": "red"}
@@ -22,11 +22,11 @@ setno_styles_dict = {0: "solid", 1: "dashed", 2: "dotted"}
 setno_styles_dict = {0: "solid", 1: "dotted", 2: "dashed"}
 
 if signal_setting is None:
-    ann_text_pos = {"FIFO": (60, 1.07), "LO-Out": (50, 1.20), "FO-Bus": (60, 1.13)}
+    ann_text_pos = {"FIFO": (60, 1.07), "LO-Out": (50, 1.20), "FO-Free": (60, 1.13)}
 else:
-    ann_text_pos = {"FIFO": (60, 1.03), "LO-Out": (60, 1.25), "FO-Bus": (70, 1.08)}
+    ann_text_pos = {"FIFO": (60, 1.03), "LO-Out": (60, 1.25), "FO-Free": (70, 1.08)}
 
-for queue_rule in ["FIFO", "LO-Out", "FO-Bus"]:
+for queue_rule in ["FIFO", "LO-Out", "FO-Free"]:
     ### generate figures for each queueing rule
     fig, ax = get_curve_plot(
         # x_label="simulaiton rounds", y_label="$\frac{delay}{global minima}$"

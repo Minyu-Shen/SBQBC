@@ -131,6 +131,7 @@ class Stop(object):
                     "LO-In-Lane",
                     "FO-Bus",
                     "FO-Lane",
+                    "FO-Free",
                 ], "must be these rules"
                 assert (
                     bus.wish_berth > loc
@@ -142,7 +143,8 @@ class Stop(object):
                     if state == "reacted":
                         self._pre_occupies[bus.berth_target] = bus
                         self._order_marks[bus.berth_target] = None
-                        self._insertion_marks[bus.berth_target] = True
+                        if self._queue_rule != "FO-Free":
+                            self._insertion_marks[bus.berth_target] = True
                     elif state == "moved":
                         self._place_buses_running[loc] = None
                         self._pre_occupies[bus.berth_target] = None
@@ -240,6 +242,7 @@ class Stop(object):
                 "LO-Out",
                 "FO-Bus",
                 "FO-Lane",
+                "FO-Free",
             ], "rules that have lane target"
             assert bus.berth_target is None, "one and only one target"
             assert (
@@ -473,7 +476,7 @@ class Stop(object):
                 if self._pre_occupies[which_berth + 1] is not None:
                     raise SystemExit("Error: conflict-1")
                 # check the overtake-out rule
-                if self._queue_rule in ["LO-Out", "FO-Bus", "FO-Lane"]:
+                if self._queue_rule in ["LO-Out", "FO-Bus", "FO-Lane", "FO-Free"]:
                     # check the buffer state
                     buffer_ready = False
                     if self._downstream_buffer is None:
@@ -719,7 +722,7 @@ class Stop(object):
         else:  # the bus in the upstream berth will be still
             # check if can overtake into the berth
             head_bus_can_move = False
-            if self._queue_rule in ["LO-In-Bus", "FO-Bus", "FO-Lane", "LO-In-Lane"]:
+            if self._queue_rule in ["LO-In-Bus", "FO-Bus", "FO-Lane", "LO-In-Lane", "FO-Free"]:
                 bus_in_upstream_place = self._place_buses_running[0]
                 if (
                     bus_in_upstream_place == None

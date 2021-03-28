@@ -19,6 +19,7 @@ def main(
     green_ratio,
     buffer_size,
     assign_plan_str,
+    is_CNP,
 ):
     print("------------------------ start main ----------------------------")
     flows, services, rhos = get_generated_line_info(
@@ -40,6 +41,8 @@ def main(
     )
     delay_seq = sim_one_NS_scenario(*args)
     signal_ex.info["delay_seq"] = delay_seq
+    signal_ex.info["is_CNP"] = is_CNP
     print("delay_seq is:", delay_seq)
+    return delay_seq[-1]
 
     # ex.info['test'] = 'testing'

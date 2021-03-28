@@ -42,6 +42,9 @@ class DistStop(Stop, DistDwell):
     def process(self, t):
         self.current_time = t
 
+        if self._queue_rule == "FO-Free" and True in self._insertion_marks:
+            exit()
+
         ### -1. update the buffer state
         if self._downstream_buffer is not None:
             self._downstream_buffer.discharge(t)

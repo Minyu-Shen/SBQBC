@@ -86,6 +86,7 @@ def apply_cnp_algo(algo_setting, stop_setting, signal_setting=None):
     assign_plan, delay = get_delay_of_continuous(
         line_flow, line_service, evenest_point, run_df, sim_info
     )
+    print("even point's delay is:", delay)
     berth_flow, berth_rho = cal_berth_f_rho_for_each_plan(
         assign_plan, line_flow, line_service
     )
@@ -97,6 +98,7 @@ def apply_cnp_algo(algo_setting, stop_setting, signal_setting=None):
             curr_depth = region.depth
 
     opt_stats = Opt_Stats(curr_promising_region_id, curr_depth, sim_budget)
+    print("start promising region is:", curr_promising_region_id)
     opt_stats.add_eval_info(assign_plan, delay)
     # print(
     #     "--------- start region is: ", opt_stats.curr_promising_region_id, "-----------"

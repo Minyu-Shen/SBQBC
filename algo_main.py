@@ -35,6 +35,6 @@ def config():
 #     for queue_rule in ["FIFO", "LO-Out", "FO-Bus"]:
 #         algo_ex.run(config_updates={"set_no": set_no, "queue_rule": queue_rule})
 
-for set_no in [0]:
-    for queue_rule in ["FIFO"]:
+for set_no in [0, 1]:
+    for queue_rule in ["FO-Free"]:
         algo_ex.run(config_updates={"set_no": set_no, "queue_rule": queue_rule})
