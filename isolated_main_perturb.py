@@ -7,7 +7,7 @@ from experiment import ex
 @ex.config
 def config():
     seed = 1
-    queue_rule = "FO-Bus"
+    queue_rule = "FIFO"
     # queue_rule = "LO-Out"
     berth_num = 4
     line_num = 12
@@ -22,9 +22,10 @@ def config():
 
 def run(assign_plan_str):
     if not ex.observers:
-        ex.observers.append(
-            MongoObserver(url="localhost:27017", db_name="perturb_stop")
-        )
+        ex.observers.append(MongoObserver(url="localhost:27017", db_name="c4_case"))
+        # ex.observers.append(
+        #     MongoObserver(url="localhost:27017", db_name="perturb_stop")
+        # )
     run = ex.run(config_updates={"assign_plan_str": assign_plan_str})
 
 

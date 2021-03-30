@@ -17,8 +17,9 @@ def config():
     # is_CNP = True  # True means using CNP, otherwise means perturbation
 
     # stop
-    queue_rule = "FO-Bus"
+    # queue_rule = "FO-Bus"
     # queue_rule = "LO-Out"
+    queue_rule = "FIFO"
     berth_num = 4
     line_num = 12
     total_flow = None

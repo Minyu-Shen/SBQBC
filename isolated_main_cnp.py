@@ -6,10 +6,11 @@ from line_profile import get_generated_line_info
 from isolated_scenario import sim_one_isolated_scenario
 from cnp_algo import apply_cnp_algo
 
+### for c=4 case, directly simulate, (without accessing the cache)
 cnp_ex = Experiment()
 
 if not cnp_ex.observers:
-    cnp_ex.observers.append(MongoObserver(url="localhost:27017", db_name="qqq"))
+    cnp_ex.observers.append(MongoObserver(url="localhost:27017", db_name="c4_case"))
 
 
 @cnp_ex.config
@@ -17,8 +18,8 @@ def config():
     seed = 1
     is_CNP = True  # True means using CNP, otherwise means perturbation
 
-    # queue_rule = "FO-Bus"
-    queue_rule = "FO-Free"
+    queue_rule = "FIFO"
+    # queue_rule = "FO-Free"
     berth_num = 4
     line_num = 12
     total_flow = None

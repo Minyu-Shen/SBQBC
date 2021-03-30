@@ -213,7 +213,7 @@ def get_run_df_from_near_stop_db(stop_setting, signal_setting):
 
 def get_case_df_from_db(stop_setting, signal_setting, algorithm):
     client = MongoClient("localhost", 27017)
-    db = client["numerical_case"]
+    db = client["case"]
 
     (
         queue_rule,
@@ -244,7 +244,7 @@ def get_case_df_from_db(stop_setting, signal_setting, algorithm):
 
     if algorithm == "CNP":
         appended_query_str = "and max_depth=={} and sample_num_of_each_region=={}".format(
-            4, 6
+            4, 10
         )
         query = query + appended_query_str
 

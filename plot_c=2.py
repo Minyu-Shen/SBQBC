@@ -14,7 +14,7 @@ signal_setting = None
 # signal_setting = (120, 0.5, 3)
 
 ### figure setting
-line_styles_dict = {"FIFO": "solid", "LO-Out": "dashed", "FO-Free": "dotted"}
+# line_styles_dict = {"FIFO": "solid", "LO-Out": "dashed", "FO-Free": "dotted"}
 
 # algo_line_colors_dict = {"Tan": "#ff1654", "CNP": "#0a1128"}
 algo_line_colors_dict = {"Tan": "black", "CNP": "red"}
@@ -51,6 +51,7 @@ for queue_rule in ["FIFO", "LO-Out", "FO-Free"]:
             set_no,
         )
         ### result df
+        print("----", queue_rule, "----")
         tan_case_df = get_case_df_from_db(stop_setting, signal_setting, algorithm="Tan")
         tan_norm_history_delays = tan_case_df.norm_history_delays.tolist()[0]
         cnp_case_df = get_case_df_from_db(stop_setting, signal_setting, algorithm="CNP")

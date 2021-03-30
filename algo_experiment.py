@@ -6,7 +6,7 @@ from tan_algo import apply_tan_algo, get_global_min_delay
 from sacred.observers import MongoObserver
 
 algo_ex = Experiment()
-algo_ex.observers.append(MongoObserver(url="localhost:27017", db_name="numerical_case"))
+algo_ex.observers.append(MongoObserver(url="localhost:27017", db_name="c2_case"))
 # algo_ex.observers.append(MongoObserver(url="localhost:27017", db_name="ggg"))
 
 
@@ -58,7 +58,7 @@ def main(
     else:
         for sim_budget in [100]:
             for max_depth in [4]:
-                for sample_num_of_each_region in [5]:
+                for sample_num_of_each_region in [10]:
                     algo_ex.info["sim_budget"] = sim_budget
                     algo_ex.info["max_depth"] = max_depth
                     algo_ex.info[
