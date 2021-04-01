@@ -1,3 +1,4 @@
+import time
 from numpy import random
 from sim_results import get_delay_of_discrete_plan
 from arena import (
@@ -33,7 +34,9 @@ def get_global_min_delay(stop_setting, signal_setting=None):
         run_df = get_run_df_from_db(stop_setting)
     else:
         run_df = get_run_df_from_near_stop_db(stop_setting, signal_setting)
-    run_df["final_delay"] = run_df.delay_seq.apply(lambda x: x[-1] if type(x) is not float else 1000.0)
+    run_df["final_delay"] = run_df.delay_seq.apply(
+        lambda x: x[-1] if type(x) is not float else 1000.0
+    )
     return run_df["final_delay"].min().item()
 
 
@@ -59,6 +62,9 @@ def apply_tan_algo(algo_setting, stop_setting, signal_setting=None):
         run_df = get_run_df_from_db(stop_setting)
     else:
         run_df = get_run_df_from_near_stop_db(stop_setting, signal_setting)
+
+    ### algorithm start
+    algo_start_time = time.time()
 
     ### create optimization stats object for recording
     opt_stats = Opt_Stats()
@@ -130,5 +136,7 @@ def apply_tan_algo(algo_setting, stop_setting, signal_setting=None):
 
     # print(opt_stats.history_min_delays)
     print("--------- end iteration -----------")
+
+    print("Tan's algorithm running time is:", time.time() - algo_start_time)
 
     return opt_stats.history_min_delays

@@ -23,7 +23,7 @@ class Region(object):
 
         # store pre-sample data
         self.pre_sample_points = []
-        self.pre_sample_size = 200
+        self.pre_sample_size = 400
 
     def evaluate_children_return_best(
         self,
@@ -65,7 +65,7 @@ class Region(object):
             assign_plan, delay = get_delay_of_continuous(
                 line_flow, line_service, continuous_vector, run_df, sim_info
             )
-            print("evaluated one plan's delay:", delay)
+            # print("evaluated one plan's delay:", delay)
             if assign_plan is not None:
                 return assign_plan, delay
 

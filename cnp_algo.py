@@ -1,3 +1,4 @@
+import time
 from numpy import random
 from sim_results import get_delay_of_continuous
 from arena import (
@@ -30,6 +31,7 @@ class Opt_Stats(object):
             pass
 
     def is_budget_run_out(self):
+        print("current eval count:", self.eval_count)
         return False if self.eval_count < self.sim_budget else True
 
 
@@ -73,6 +75,9 @@ def apply_cnp_algo(algo_setting, stop_setting, signal_setting=None):
             "buffer_size": buffer_size,
         }
         run_df = get_run_df_from_near_stop_db(stop_setting, signal_setting)
+
+    ### algorithm start
+    algo_start_time = time.time()
 
     ### find start point and its located region of maximum depth
     curr_promising_region_id = -1
@@ -188,5 +193,7 @@ def apply_cnp_algo(algo_setting, stop_setting, signal_setting=None):
                     opt_stats.curr_promising_region_id = best_child_region_id
     print("--------- end iteration -----------")
     # print(opt_stats.min_delay_so_far, opt_stats.eval_count)
+
+    print("cnp algorithm running time is:", time.time() - algo_start_time)
 
     return opt_stats.history_min_delays

@@ -6,7 +6,7 @@ from experiment import ex
 
 @ex.config
 def config():
-    seed = 1
+    seed = 6
     queue_rule = "FIFO"
     # queue_rule = "LO-Out"
     berth_num = 4
@@ -32,7 +32,7 @@ def run(assign_plan_str):
 perturb_num = 500
 berth_num, line_num = config()["berth_num"], config()["line_num"]
 enumerator = random_assign_plan_enumerator(line_num, berth_num, perturb_num)
-with futures.ProcessPoolExecutor(max_workers=22) as executor:
+with futures.ProcessPoolExecutor(max_workers=21) as executor:
     tasks = [executor.submit(run, str(assign_plan)) for assign_plan in enumerator]
     for future in futures.as_completed(tasks):
         pass

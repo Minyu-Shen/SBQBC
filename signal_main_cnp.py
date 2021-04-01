@@ -1,9 +1,5 @@
 from sacred.observers import MongoObserver
 from sacred import Experiment
-from concurrent import futures
-from arena import random_assign_plan_enumerator
-from line_profile import get_generated_line_info
-from isolated_scenario import sim_one_isolated_scenario
 from cnp_algo import apply_cnp_algo
 
 ### for c=4 case, directly simulate, (without accessing the cache)
@@ -11,6 +7,7 @@ cnp_ex = Experiment()
 
 if not cnp_ex.observers:
     cnp_ex.observers.append(MongoObserver(url="localhost:27017", db_name="c4_case"))
+    # cnp_ex.observers.append(MongoObserver(url="localhost:27017", db_name="ggg"))
 
 
 @cnp_ex.config
@@ -37,7 +34,10 @@ def config():
     )
 
     # signal
-    signal_setting = None
+    cycle_length = 120
+    green_ratio = 0.5
+    buffer_size = 3
+    signal_setting = (cycle_length, green_ratio, buffer_size)
 
     # algorithm
     sample_num_of_each_region = 10

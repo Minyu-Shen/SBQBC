@@ -11,16 +11,16 @@ def config():
     mean_service = 25  # seconds
 
     # signal
-    signal_paras = None
+    # signal_paras = None
     # signal_paras = {"cycle_length": 120, "green_ratio": 0.5, "buffer_size": 3}
 
-    cycle_length = None
-    green_ratio = None
-    buffer_size = None
+    # cycle_length = None
+    # green_ratio = None
+    # buffer_size = None
 
-    # cycle_length = 120
-    # green_ratio = 0.5
-    # buffer_size = 3
+    cycle_length = 120
+    green_ratio = 0.5
+    buffer_size = 3
 
     # algorithm
     # algorithm = "Tan"

@@ -213,7 +213,7 @@ def get_run_df_from_near_stop_db(stop_setting, signal_setting):
 
 def get_case_df_from_db(stop_setting, signal_setting, algorithm):
     client = MongoClient("localhost", 27017)
-    db = client["case"]
+    db = client["c2_case"]
 
     (
         queue_rule,
