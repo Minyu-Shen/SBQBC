@@ -14,7 +14,7 @@ line_num = 12
 arrival_type = "Gaussian"
 queue_rule = "FIFO"
 signal_setting = None
-# signal_setting = (120, 0.5, 3)
+signal_setting = (120, 0.5, 3)
 
 db_query = {
     "config.queue_rule": queue_rule,
@@ -22,6 +22,13 @@ db_query = {
     "config.line_num": line_num,
     "config.arrival_type": arrival_type,
 }
+
+if signal_setting is not None:
+    db_query["config.cycle_length"] = signal_setting[0]
+else:
+    db_query["config.cycle_length"] = None
+
+
 if signal_setting is None:
     db_query["config.signal_setting"] = None
 else:
@@ -87,7 +94,7 @@ ax.annotate(
     ),
 )
 ax.plot(
-    cnp_x[0], cnp_delays[0], "rD",
+    cnp_x[0], cnp_delays[0], "kD",
 )
 
 if signal_setting is not None:

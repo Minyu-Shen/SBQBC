@@ -17,7 +17,7 @@ def config():
     is_CNP = False  # True means using CNP, otherwise means perturbation
     cycle_length = 120
     green_ratio = 0.5
-    buffer_size = 2
+    buffer_size = 3
 
 
 def run(assign_plan_str):
@@ -31,7 +31,7 @@ def run(assign_plan_str):
 perturb_num = 500
 berth_num, line_num = config()["berth_num"], config()["line_num"]
 enumerator = random_assign_plan_enumerator(line_num, berth_num, perturb_num)
-with futures.ProcessPoolExecutor(max_workers=16) as executor:
+with futures.ProcessPoolExecutor(max_workers=18) as executor:
     tasks = [executor.submit(run, str(assign_plan)) for assign_plan in enumerator]
     for future in futures.as_completed(tasks):
         pass

@@ -11,26 +11,25 @@ total_flow = 135
 arrival_type = "Gaussian"
 mean_service = 25
 signal_setting = None
-# signal_setting = (120, 0.5, 3)
+signal_setting = (120, 0.5, 3)
 
 ### figure setting
 # line_styles_dict = {"FIFO": "solid", "LO-Out": "dashed", "FO-Free": "dotted"}
 
 # algo_line_colors_dict = {"Tan": "#ff1654", "CNP": "#0a1128"}
-algo_line_colors_dict = {"Tan": "black", "CNP": "red"}
-setno_styles_dict = {0: "solid", 1: "dashed", 2: "dotted"}
+algo_line_colors_dict = {"Tan": "0.65", "CNP": "0"}
+# setno_styles_dict = {0: "solid", 1: "dashed", 2: "dotted"}
 setno_styles_dict = {0: "solid", 1: "dotted", 2: "dashed"}
 
 if signal_setting is None:
-    ann_text_pos = {"FIFO": (60, 1.07), "LO-Out": (50, 1.20), "FO-Free": (60, 1.13)}
+    ann_text_pos = {"FIFO": (50, 1.06), "LO-Out": (50, 1.15), "FO-Free": (50, 1.06)}
 else:
-    ann_text_pos = {"FIFO": (60, 1.03), "LO-Out": (60, 1.25), "FO-Free": (70, 1.08)}
+    ann_text_pos = {"FIFO": (50, 1.04), "LO-Out": (50, 1.2), "FO-Free": (50, 1.07)}
 
 for queue_rule in ["FIFO", "LO-Out", "FO-Free"]:
     ### generate figures for each queueing rule
     fig, ax = get_curve_plot(
-        # x_label="simulaiton rounds", y_label="$\frac{delay}{global minima}$"
-        x_label="Simulaiton rounds",
+        x_label="Number of allocation plans simulated",
         y_label="Searched minimum / global minimum",
         x_font=14,
         y_font=14,
@@ -73,7 +72,7 @@ for queue_rule in ["FIFO", "LO-Out", "FO-Free"]:
             tan_norm_history_delays,
             color=algo_line_colors_dict["Tan"],
             linestyle=setno_styles_dict[set_no],
-            linewidth=1.5,
+            linewidth=2.0,
             label=tan_label,
         )
         cnp_label = "Proposed CNP, line set-" + str(set_str_count)
@@ -82,7 +81,7 @@ for queue_rule in ["FIFO", "LO-Out", "FO-Free"]:
             cnp_norm_history_delays,
             color=algo_line_colors_dict["CNP"],
             linestyle=setno_styles_dict[set_no],
-            linewidth=1.5,
+            linewidth=2.0,
             label=cnp_label,
         )
         line_flow, line_service, line_rho = get_generated_line_info(
@@ -105,9 +104,9 @@ for queue_rule in ["FIFO", "LO-Out", "FO-Free"]:
             ),
         )
         ax.plot(
-            x_cnp[0], cnp_norm_history_delays[0], "rD",
+            x_cnp[0], cnp_norm_history_delays[0], "kD",
         )
-        ax.legend(fontsize=14)
+        ax.legend(handlelength=3.5, fontsize=14)
         y_max_lim = max(cnp_norm_history_delays[0], y_max_lim)
         set_str_count += 1
 
